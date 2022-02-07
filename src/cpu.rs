@@ -1,11 +1,25 @@
 use std::collections::HashMap;
 use crate::opcodes;
 
+bitflags! {
+  // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+  pub struct CpuFlags: u8 {
+    const CARRY = 0x01;
+    const ZERO = 0x02;
+    const INTERRUPT_DISABLE = 0x04;
+    const DECIMAL_MODE = 0x08;
+    const BREAK = 0x10;
+    const BREAK2 = 0x20;
+    const OVERFLOW = 0x40;
+    const NEGATIV = 0x80;
+  }
+}
+
 pub struct CPU {
   pub register_a: u8,
   pub register_x: u8,
   pub register_y: u8,
-  pub status: u8,
+  pub status: CpuFlags,
   pub program_counter: u16,
   memory: [u8; 0xFFFF]
 }
@@ -60,7 +74,7 @@ impl CPU {
       register_a: 0,
       register_x: 0,
       register_y: 0,
-      status: 0,
+      status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
       program_counter: 0,
       memory: [0; 0xFFFF]
     }
@@ -80,7 +94,7 @@ impl CPU {
   pub fn reset(&mut self) {
     self.register_a = 0;
     self.register_x = 0;
-    self.status = 0;
+    self.status = CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2;
 
     self.program_counter = self.mem_read_u16(0xFFFC);
   }
@@ -96,7 +110,10 @@ impl CPU {
       let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
       match code {
-        0x00 => return,
+        0x00 => {
+          self.status.insert(CpuFlags::BREAK);
+          return
+        },
 
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
           self.lda(&opcode.mode);
@@ -186,15 +203,15 @@ impl CPU {
 
   fn update_zero_and_negative_flags(&mut self, result: u8) {
     if result == 0 { // Z zero flag
-      self.status = self.status | 0b0000_0010;
+      self.status.insert(CpuFlags::ZERO);
     } else {
-      self.status = self.status & 0b1111_1101;
+      self.status.remove(CpuFlags::ZERO);
     }
 
     if result & 0b1000_0000 != 0 { // N negative flag
-      self.status = self.status | 0b1000_0000;
+      self.status.insert(CpuFlags::NEGATIV);
     } else {
-      self.status = self.status & 0b0111_1111;
+      self.status.remove(CpuFlags::NEGATIV);
     }
   }
 
@@ -266,8 +283,8 @@ mod test {
     cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
 
     assert_eq!(cpu.register_a, 0x05);
-    assert_eq!(cpu.status & 0b0000_0010, 0b00);
-    assert_eq!(cpu.status & 0b1000_0000, 0);
+    assert_eq!(cpu.status & CpuFlags::ZERO, CpuFlags::empty());
+    assert_eq!(cpu.status & CpuFlags::NEGATIV, CpuFlags::empty());
   }
 
   #[test]
@@ -275,7 +292,7 @@ mod test {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
 
-    assert_eq!(cpu.status & 0b0000_0010, 0b10);
+    assert_eq!(cpu.status & CpuFlags::ZERO, CpuFlags::ZERO);
   }
 
   #[test]
@@ -351,5 +368,14 @@ mod test {
     let mem = cpu.mem_read(0x44);
     assert_eq!(cpu.register_y, 0x42);
     assert_eq!(mem, 0x42);
+  }
+
+  #[test]
+  fn test_reset() {
+    let mut cpu = CPU::new();
+    cpu.reset();
+
+    assert_eq!(cpu.status & CpuFlags::INTERRUPT_DISABLE, CpuFlags::INTERRUPT_DISABLE);
+    assert_eq!(cpu.status & CpuFlags::BREAK2, CpuFlags::BREAK2);
   }
 }
