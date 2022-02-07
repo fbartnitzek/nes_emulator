@@ -102,8 +102,24 @@ impl CPU {
           self.lda(&opcode.mode);
         }
 
+        0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => {
+          self.ldx(&opcode.mode);
+        }
+
+        0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => {
+          self.ldy(&opcode.mode);
+        }
+
         0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {
           self.sta(&opcode.mode);
+        }
+
+        0x86 | 0x96 | 0x8E => {
+          self.stx(&opcode.mode);
+        }
+
+        0x84 | 0x94 | 0x8C => {
+          self.sty(&opcode.mode);
         }
 
         0xAA => self.tax(),
@@ -127,9 +143,35 @@ impl CPU {
     self.update_zero_and_negative_flags(self.register_a);
   }
 
+  fn ldx(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_x = value;
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn ldy(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_y = value;
+    self.update_zero_and_negative_flags(self.register_y);
+  }
+
   fn sta(&mut self, mode: &AddressingMode) {
     let addr = self.get_operand_address(mode);
     self.mem_write(addr, self.register_a);
+  }
+
+  fn stx(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    self.mem_write(addr, self.register_x);
+  }
+
+  fn sty(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    self.mem_write(addr, self.register_y);
   }
 
   fn tax(&mut self) {
@@ -276,5 +318,38 @@ mod test {
     cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
 
     assert_eq!(cpu.register_a, 0x55);
+  }
+
+  #[test]
+  fn test_lda_immediate_sta_absolute_mode() {
+    let mut cpu = CPU::new();
+
+    cpu.load_and_run(vec![0xa9, 0x42, 0x8D, 0x00, 0x02, 0x00]);
+
+    let mem = cpu.mem_read_u16(0x0200);
+    assert_eq!(cpu.register_a, 0x42);
+    assert_eq!(mem, 0x42);
+  }
+
+  #[test]
+  fn test_ldx_immediate_stx_zero_page() {
+    let mut cpu = CPU::new();
+
+    cpu.load_and_run(vec![0xA2, 0x42, 0x86, 0x02, 0x00]);
+
+    let mem = cpu.mem_read(0x02);
+    assert_eq!(cpu.register_x, 0x42);
+    assert_eq!(mem, 0x42);
+  }
+
+  #[test]
+  fn test_ldy_immediate_ldx_immediate_sty_zero_page_x() {
+    let mut cpu = CPU::new();
+
+    cpu.load_and_run(vec![0xA0, 0x42, 0xA2, 0x42, 0x94, 0x02, 0x00]);
+
+    let mem = cpu.mem_read(0x44);
+    assert_eq!(cpu.register_y, 0x42);
+    assert_eq!(mem, 0x42);
   }
 }
