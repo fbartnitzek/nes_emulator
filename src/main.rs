@@ -1,5 +1,6 @@
 mod cpu;
 mod opcodes;
+mod cpu_tests;
 
 #[macro_use]
 extern crate lazy_static;
