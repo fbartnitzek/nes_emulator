@@ -141,6 +141,8 @@ impl CPU {
 
         0xAA => self.tax(),
 
+        0xA8 => self.tay(),
+
         0xE8 => self.inx(),
 
         _ => todo!()
@@ -194,6 +196,11 @@ impl CPU {
   fn tax(&mut self) {
     self.register_x = self.register_a;
     self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn tay(&mut self) {
+    self.register_y = self.register_a;
+    self.update_zero_and_negative_flags(self.register_y);
   }
 
   fn inx(&mut self) {
@@ -280,7 +287,7 @@ mod test {
   #[test]
   fn test_0xa9_lda_immediate_load_data() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0x05, 0x00]);
 
     assert_eq!(cpu.register_a, 0x05);
     assert_eq!(cpu.status & CpuFlags::ZERO, CpuFlags::empty());
@@ -290,7 +297,7 @@ mod test {
   #[test]
   fn test_0xa9_lda_zero_flag() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0x00, 0x00]);
 
     assert_eq!(cpu.status & CpuFlags::ZERO, CpuFlags::ZERO);
   }
@@ -298,7 +305,7 @@ mod test {
   #[test]
   fn test_0xaa_tax_move_a_to_x() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x0a, 0xaa, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0x0A, 0xAA, 0x00]);
 
     assert_eq!(cpu.register_x, 10)
   }
@@ -306,7 +313,7 @@ mod test {
   #[test]
   fn test_0xe8_inx_increment_x() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x0a, 0xaa, 0xe8, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0x0A, 0xAA, 0xE8, 0x00]);
 
     assert_eq!(cpu.register_x, 11)
   }
@@ -314,15 +321,15 @@ mod test {
   #[test]
   fn test_5_ops_working_together() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0xC0, 0xAA, 0xE8, 0x00]);
 
-    assert_eq!(cpu.register_x, 0xc1);
+    assert_eq!(cpu.register_x, 0xC1);
   }
 
   #[test]
   fn test_inx_overflow() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0xFF, 0xAA, 0xE8, 0xE8, 0x00]);
 
     assert_eq!(cpu.register_x, 1)
   }
@@ -332,7 +339,7 @@ mod test {
     let mut cpu = CPU::new();
     cpu.mem_write(0x10, 0x55);
 
-    cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
+    cpu.load_and_run(vec![0xA5, 0x10, 0x00]);
 
     assert_eq!(cpu.register_a, 0x55);
   }
@@ -341,7 +348,7 @@ mod test {
   fn test_lda_immediate_sta_absolute_mode() {
     let mut cpu = CPU::new();
 
-    cpu.load_and_run(vec![0xa9, 0x42, 0x8D, 0x00, 0x02, 0x00]);
+    cpu.load_and_run(vec![0xA9, 0x42, 0x8D, 0x00, 0x02, 0x00]);
 
     let mem = cpu.mem_read_u16(0x0200);
     assert_eq!(cpu.register_a, 0x42);
@@ -377,5 +384,13 @@ mod test {
 
     assert_eq!(cpu.status & CpuFlags::INTERRUPT_DISABLE, CpuFlags::INTERRUPT_DISABLE);
     assert_eq!(cpu.status & CpuFlags::BREAK2, CpuFlags::BREAK2);
+  }
+
+  #[test]
+  fn test_0xa8_tay_move_a_to_y() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0x0A, 0xA8, 0x00]);
+
+    assert_eq!(cpu.register_y, 10)
   }
 }
