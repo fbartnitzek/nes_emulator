@@ -130,3 +130,21 @@ fn test_0xba_tsx_transfer_stack_pointer_to_x() {
   assert_eq!(cpu.register_x, 10);
   assert_eq!(cpu.stack_pointer, 10);
 }
+
+#[test]
+fn test_0x8a_txa_transfer_x_to_acc() {
+  let mut cpu = CPU::new();
+  cpu.load_and_run(vec![0xE8, 0x8A, 0x00]); // inc x (1), acc = x (1)
+
+  assert_eq!(cpu.register_a, 1);
+  assert_eq!(cpu.register_x, 1);
+}
+
+#[test]
+fn test_0xc8_0x98_iny_tya_transfer_y_to_acc() {
+  let mut cpu = CPU::new();
+  cpu.load_and_run(vec![0xC8, 0x98, 0x00]); // inc y (1), acc = y (1)
+
+  assert_eq!(cpu.register_y, 1);
+  assert_eq!(cpu.register_a, 1);
+}

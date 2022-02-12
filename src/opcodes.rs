@@ -50,7 +50,7 @@ lazy_static! {
     OpCode::new(0x49, "EOR", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xE6, "INC", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xE8, "INX", 1, 2, AddressingMode::NoneAddressing),
-    OpCode::new(0xC8, "INY", 1, 2, AddressingMode::NoneAddressing), //todo
+    OpCode::new(0xC8, "INY", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0x4C, "JMP", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x20, "JSR", 1, 2, AddressingMode::NoneAddressing), //todo
 
@@ -110,9 +110,9 @@ lazy_static! {
     OpCode::new(0xAA, "TAX", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0xA8, "TAY", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0xBA, "TSX", 1, 2, AddressingMode::NoneAddressing),
-    OpCode::new(0x8A, "TXA", 1, 2, AddressingMode::NoneAddressing), // todo
+    OpCode::new(0x8A, "TXA", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0x9A, "TXS", 1, 2, AddressingMode::NoneAddressing),
-    OpCode::new(0x98, "TYA", 1, 2, AddressingMode::NoneAddressing), // todo
+    OpCode::new(0x98, "TYA", 1, 2, AddressingMode::NoneAddressing),
   ];
 
   pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

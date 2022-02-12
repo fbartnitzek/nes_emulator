@@ -146,15 +146,21 @@ impl CPU {
           self.sty(&opcode.mode);
         }
 
+        0xE8 => self.inx(),
+
+        0xC8 => self.iny(),
+
         0xAA => self.tax(),
 
         0xA8 => self.tay(),
 
-        0xE8 => self.inx(),
+        0xBA => self.tsx(),
+
+        0x8A => self.txa(),
 
         0x9A => self.txs(),
 
-        0xBA => self.tsx(),
+        0x98 => self.tya(),
 
         _ => todo!()
       }
@@ -204,6 +210,16 @@ impl CPU {
     self.mem_write(addr, self.register_y);
   }
 
+  fn inx(&mut self) {
+    self.register_x = self.register_x.wrapping_add(1);
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn iny(&mut self) {
+    self.register_y = self.register_y.wrapping_add(1);
+    self.update_zero_and_negative_flags(self.register_y);
+  }
+
   fn tax(&mut self) {
     self.register_x = self.register_a;
     self.update_zero_and_negative_flags(self.register_x);
@@ -214,18 +230,23 @@ impl CPU {
     self.update_zero_and_negative_flags(self.register_y);
   }
 
-  fn inx(&mut self) {
-    self.register_x = self.register_x.wrapping_add(1);
+  fn tsx(&mut self) {
+    self.register_x = self.stack_pointer;
     self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn txa(&mut self) {
+    self.register_a = self.register_x;
+    self.update_zero_and_negative_flags(self.register_a);
   }
 
   fn txs(&mut self) {
     self.stack_pointer = self.register_x;
   }
 
-  fn tsx(&mut self) {
-    self.register_x = self.stack_pointer;
-    self.update_zero_and_negative_flags(self.register_x);
+  fn tya(&mut self) {
+    self.register_a = self.register_y;
+    self.update_zero_and_negative_flags(self.register_a);
   }
 
   fn update_zero_and_negative_flags(&mut self, result: u8) {
