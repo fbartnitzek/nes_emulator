@@ -15,12 +15,16 @@ bitflags! {
   }
 }
 
+// const STACK: u16 = 0x0100;
+const STACK_RESET: u8 = 0xFD;
+
 pub struct CPU {
   pub register_a: u8,
   pub register_x: u8,
   pub register_y: u8,
   pub status: CpuFlags,
   pub program_counter: u16,
+  pub stack_pointer: u8,
   memory: [u8; 0xFFFF]
 }
 
@@ -74,6 +78,7 @@ impl CPU {
       register_a: 0,
       register_x: 0,
       register_y: 0,
+      stack_pointer: STACK_RESET,
       status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
       program_counter: 0,
       memory: [0; 0xFFFF]
@@ -94,6 +99,8 @@ impl CPU {
   pub fn reset(&mut self) {
     self.register_a = 0;
     self.register_x = 0;
+    self.register_y = 0;
+    self.stack_pointer = STACK_RESET;
     self.status = CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2;
 
     self.program_counter = self.mem_read_u16(0xFFFC);
@@ -144,6 +151,10 @@ impl CPU {
         0xA8 => self.tay(),
 
         0xE8 => self.inx(),
+
+        0x9A => self.txs(),
+
+        0xBA => self.tsx(),
 
         _ => todo!()
       }
@@ -205,6 +216,15 @@ impl CPU {
 
   fn inx(&mut self) {
     self.register_x = self.register_x.wrapping_add(1);
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn txs(&mut self) {
+    self.stack_pointer = self.register_x;
+  }
+
+  fn tsx(&mut self) {
+    self.register_x = self.stack_pointer;
     self.update_zero_and_negative_flags(self.register_x);
   }
 

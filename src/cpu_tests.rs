@@ -19,7 +19,7 @@ fn test_0xa9_lda_zero_flag() {
 }
 
 #[test]
-fn test_0xaa_tax_move_a_to_x() {
+fn test_0xaa_tax_transfer_a_to_x() {
   let mut cpu = CPU::new();
   cpu.load_and_run(vec![0xA9, 0x0A, 0xAA, 0x00]);
 
@@ -103,9 +103,30 @@ fn test_reset() {
 }
 
 #[test]
-fn test_0xa8_tay_move_a_to_y() {
+fn test_0xa8_tay_transfer_a_to_y() {
   let mut cpu = CPU::new();
   cpu.load_and_run(vec![0xA9, 0x0A, 0xA8, 0x00]);
 
   assert_eq!(cpu.register_y, 10)
+}
+
+#[test]
+fn test_0x9a_txs_transfer_x_to_stack_pointer() {
+  let mut cpu = CPU::new();
+  cpu.load_and_run(vec![0xA9, 0x0A, 0xAA, 0x9A, 0x00]);
+
+  assert_eq!(cpu.register_x, 10);
+  assert_eq!(cpu.stack_pointer, 10);
+}
+
+#[test]
+fn test_0xba_tsx_transfer_stack_pointer_to_x() {
+  let mut cpu = CPU::new();
+  cpu.load_and_run(vec![0xA9, 0x0A, 0xAA, 0x9A, // set stack_pointer = x (10)
+                        0xA9, 0x0B, 0xAA, // reset x to 11
+                        0xBA, 0x00,       // set x = stack_pointer
+  ]);
+
+  assert_eq!(cpu.register_x, 10);
+  assert_eq!(cpu.stack_pointer, 10);
 }
