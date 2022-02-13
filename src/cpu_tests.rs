@@ -80,6 +80,32 @@ fn test_cmp_compare_acc_with_memory_absolute_greater() {
 }
 
 #[test]
+fn test_cpx_compare_x_with_memory_absolute_equal() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x2142, 0x42);
+  cpu.register_x = 0x42;
+  cpu.load_and_run(vec![0xEC, 0x42, 0x21, 0x00]);
+
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+}
+
+#[test]
+fn test_cpy_compare_y_with_memory_absolute_equal() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x2142, 0x42);
+  cpu.register_y = 0x42;
+  cpu.load_and_run(vec![0xCC, 0x42, 0x21, 0x00]);
+
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+}
+
+#[test]
 fn test_dec_decrement_memory_zero_page() {
   let mut cpu = CPU::new();
 

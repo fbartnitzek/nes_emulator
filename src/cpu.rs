@@ -144,6 +144,8 @@ impl CPU {
         0xB8 => self.clv(),
 
         0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1  => self.cmp(&opcode.mode),
+        0xE0 | 0xE4 | 0xEC => self.cpx(&opcode.mode),
+        0xC0 | 0xC4 | 0xCC => self.cpy(&opcode.mode),
 
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
@@ -200,6 +202,14 @@ impl CPU {
 
   fn cmp(&mut self, mode: &AddressingMode) {
     self.compare(mode, self.register_a);
+  }
+
+  fn cpx(&mut self, mode: &AddressingMode) {
+    self.compare(mode, self.register_x);
+  }
+
+  fn cpy(&mut self, mode: &AddressingMode) {
+    self.compare(mode, self.register_y);
   }
 
   fn compare(&mut self, mode: &AddressingMode, reference: u8) {
