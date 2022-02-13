@@ -31,6 +31,44 @@ fn test_tax_transfer_a_to_x() {
 }
 
 #[test]
+fn test_dec_decrement_memory_zero_page() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x0021, 0x0043);
+  cpu.load_and_run(vec![0xC6, 0x21, 0x00]);
+
+  assert_eq!(0x0042, cpu.mem_read(0x0021))
+}
+
+#[test]
+fn test_dec_decrement_memory_absolute() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x2142, 0x43);
+  cpu.load_and_run(vec![0xCE, 0x42, 0x21, 0x00]);
+
+  assert_eq!(0x42, cpu.mem_read(0x2142))
+}
+
+#[test]
+fn test_dex_decrement_x() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xCA, 0x00]);
+
+  assert_eq!(0xFF, cpu.register_x)
+}
+
+#[test]
+fn test_dey_decrement_y() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x88, 0x00]);
+
+  assert_eq!(0xFF, cpu.register_y)
+}
+
+#[test]
 fn test_inx_increment_x() {
   let mut cpu = CPU::new();
   cpu.register_x = 10;
