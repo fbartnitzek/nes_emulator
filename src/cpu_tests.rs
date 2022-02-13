@@ -1,6 +1,46 @@
 use crate::cpu::{CPU, CpuFlags, Mem};
 
 #[test]
+fn test_clc_clear_carry_flag() {
+  let mut cpu = CPU::new();
+
+  cpu.status = CpuFlags::CARRY;
+  cpu.load_and_run(vec![0x18, 0x00]);
+
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+}
+
+#[test]
+fn test_cld_clear_decimal_mode() {
+  let mut cpu = CPU::new();
+
+  cpu.status = CpuFlags::DECIMAL_MODE;
+  cpu.load_and_run(vec![0xD8, 0x00]);
+
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::DECIMAL_MODE);
+}
+
+#[test]
+fn test_cli_clear_interrupt_disable() {
+  let mut cpu = CPU::new();
+
+  cpu.status = CpuFlags::INTERRUPT_DISABLE;
+  cpu.load_and_run(vec![0x58, 0x00]);
+
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::INTERRUPT_DISABLE);
+}
+
+#[test]
+fn test_clv_clear_overflow_flag() {
+  let mut cpu = CPU::new();
+
+  cpu.status = CpuFlags::OVERFLOW;
+  cpu.load_and_run(vec![0xB8, 0x00]);
+
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
 fn test_dec_decrement_memory_zero_page() {
   let mut cpu = CPU::new();
 
