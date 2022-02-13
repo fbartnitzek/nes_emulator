@@ -25,7 +25,7 @@ pub struct CPU {
   pub status: CpuFlags,
   pub program_counter: u16,
   pub stack_pointer: u8,
-  memory: [u8; 0xFFFF]
+  memory: [u8; 0xFFFF],
 }
 
 #[derive(Debug)]
@@ -80,14 +80,29 @@ impl CPU {
       register_y: 0,
       stack_pointer: STACK_RESET,
       status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
-      program_counter: 0,
-      memory: [0; 0xFFFF]
+      // program_counter: 0,
+      program_counter: 0x8000,
+      memory: [0; 0xFFFF],
     }
+  }
+
+  pub fn dump_non_empty_memory(&mut self) {
+    for (i, elem) in self.memory.iter().enumerate() {
+      let value = *elem;
+      if value > 0 {
+        println!("Memory {:x} = {:x}", i, value)
+      }
+    }
+  }
+
+  pub fn load_reset_and_run(&mut self, program: Vec<u8>) {
+    self.load(program);
+    self.reset();
+    self.run();
   }
 
   pub fn load_and_run(&mut self, program: Vec<u8>) {
     self.load(program);
-    self.reset();
     self.run();
   }
 
@@ -119,8 +134,8 @@ impl CPU {
       match code {
         0x00 => {
           self.status.insert(CpuFlags::BREAK);
-          return
-        },
+          return;
+        }
 
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
           self.lda(&opcode.mode);
@@ -166,7 +181,7 @@ impl CPU {
       }
 
       if program_counter_state == self.program_counter {
-        self.program_counter += (opcode.len -1) as u16;
+        self.program_counter += (opcode.len - 1) as u16;
       }
     }
   }
