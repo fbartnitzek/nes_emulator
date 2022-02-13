@@ -34,29 +34,37 @@ lazy_static! {
     OpCode::new(0x30, "BMI", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xD0, "BNE", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0x10, "BPL", 2, 2, AddressingMode::Immediate), // todo
+
     OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+
     OpCode::new(0x50, "BVC", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0x70, "BVS", 2, 2, AddressingMode::Immediate), // todo
+
     OpCode::new(0x18, "CLC", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xD8, "CLD", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0x58, "CLI", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xB8, "CLV", 2, 2, AddressingMode::Immediate), // todo
+
     OpCode::new(0xC9, "CMP", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xE0, "CPX", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xC0, "CPY", 2, 2, AddressingMode::Immediate), // todo
+
     OpCode::new(0xC6, "DEC", 2, 5, AddressingMode::ZeroPage),
     OpCode::new(0xD6, "DEC", 2, 6, AddressingMode::ZeroPage_X),
     OpCode::new(0xCE, "DEC", 3, 6, AddressingMode::Absolute),
     OpCode::new(0xDE, "DEC", 3, 7, AddressingMode::Absolute_X),
     OpCode::new(0xCA, "DEX", 1, 2, AddressingMode::Immediate),
     OpCode::new(0x88, "DEY", 1, 2, AddressingMode::Immediate),
+
     OpCode::new(0x49, "EOR", 2, 2, AddressingMode::Immediate), // todo
+
     OpCode::new(0xE6, "INC", 2, 5, AddressingMode::ZeroPage),
     OpCode::new(0xF6, "INC", 2, 6, AddressingMode::ZeroPage_X),
     OpCode::new(0xEE, "INC", 3, 6, AddressingMode::Absolute),
     OpCode::new(0xFE, "INC", 3, 7, AddressingMode::Absolute_X),
     OpCode::new(0xE8, "INX", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0xC8, "INY", 1, 2, AddressingMode::NoneAddressing),
+
     OpCode::new(0x4C, "JMP", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x20, "JSR", 1, 2, AddressingMode::NoneAddressing), //todo
 
@@ -84,10 +92,12 @@ lazy_static! {
     OpCode::new(0x4A, "LSR", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0xEA, "NOP", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x09, "ORA", 1, 2, AddressingMode::NoneAddressing), //todo
-    OpCode::new(0x48, "PHA", 1, 2, AddressingMode::NoneAddressing), //todo
+
+    OpCode::new(0x48, "PHA", 1, 3, AddressingMode::NoneAddressing),
     OpCode::new(0x08, "PHP", 1, 2, AddressingMode::NoneAddressing), //todo
-    OpCode::new(0x68, "PLA", 1, 2, AddressingMode::NoneAddressing), //todo
+    OpCode::new(0x68, "PLA", 1, 4, AddressingMode::NoneAddressing),
     OpCode::new(0x28, "PLP", 1, 2, AddressingMode::NoneAddressing), //todo
+
     OpCode::new(0x2A, "ROL", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x6A, "ROR", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x40, "RTI", 1, 2, AddressingMode::NoneAddressing), //todo

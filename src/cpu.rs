@@ -15,8 +15,9 @@ bitflags! {
   }
 }
 
-// const STACK: u16 = 0x0100;
-const STACK_RESET: u8 = 0xFD;
+// With the 6502, the stack is always on page one ($100-$1FF) and works top down.
+const STACK_AREA: u16 = 0x0100;
+const STACK_RESET: u8 = 0xFF;
 
 pub struct CPU {
   pub register_a: u8,
@@ -161,6 +162,10 @@ impl CPU {
 
         0xC8 => self.iny(),
 
+        0x48 => self.pha(),
+
+        0x68 => self.pla(),
+
         0xAA => self.tax(),
 
         0xA8 => self.tay(),
@@ -257,6 +262,15 @@ impl CPU {
     self.update_zero_and_negative_flags(self.register_y);
   }
 
+  fn pha(&mut self) {
+    self.stack_push(self.register_a);
+  }
+
+  fn pla(&mut self) {
+    self.register_a = self.stack_pop();
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
   fn tax(&mut self) {
     self.register_x = self.register_a;
     self.update_zero_and_negative_flags(self.register_x);
@@ -284,6 +298,16 @@ impl CPU {
   fn tya(&mut self) {
     self.register_a = self.register_y;
     self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn stack_push(&mut self, data: u8) {
+    self.mem_write(STACK_AREA as u16 + self.stack_pointer as u16, data);
+    self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+  }
+
+  fn stack_pop(&mut self) -> u8 {
+    self.stack_pointer = self.stack_pointer.wrapping_add(1);
+    self.mem_read(STACK_AREA as u16 + self.stack_pointer as u16)
   }
 
   fn update_zero_and_negative_flags(&mut self, result: u8) {

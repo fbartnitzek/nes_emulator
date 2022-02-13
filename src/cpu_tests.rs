@@ -131,7 +131,84 @@ fn test_ldy_immediate() {
 
   cpu.load_and_run(vec![0xA0, 0x42, 0x00]);
 
-  assert_eq!(cpu.register_y, 0x42);
+  assert_eq!(0x42, cpu.register_y);
+}
+
+#[test]
+fn test_pha_push_accumulator_to_stack() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0x42;
+  cpu.load_and_run(vec![0x48, 0x00]);
+
+  assert_eq!(0xFE, cpu.stack_pointer);
+  assert_eq!(0x42, cpu.mem_read(0x01FF));
+}
+
+#[test]
+fn test_pha_3_stack_pushes() {
+  let mut cpu = CPU::new();
+
+  cpu.load_reset_and_run(vec![0xA9, 0x20, 0x48, 0xA9, 0x21, 0x48, 0xA9, 0x22, 0x48, 0x00]);
+
+  cpu.dump_non_empty_memory();
+  assert_eq!(0xFC, cpu.stack_pointer);
+  assert_eq!(0x20, cpu.mem_read(0x01FF));
+  assert_eq!(0x21, cpu.mem_read(0x01FE));
+  assert_eq!(0x22, cpu.mem_read(0x01FD));
+}
+
+#[test]
+fn test_pha_stack_overflow() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0x42;
+  cpu.stack_pointer = 0x00;
+  cpu.load_and_run(vec![0x48, 0x00]);
+
+  cpu.dump_non_empty_memory();
+  assert_eq!(0xFF, cpu.stack_pointer);
+  assert_eq!(0x42, cpu.mem_read(0x0100));
+}
+
+#[test]
+fn test_pla_pull_accumulator_from_stack() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x01FF, 0x42);
+  cpu.stack_pointer = 0xFE;
+  cpu.load_and_run(vec![0x68, 0x00]);
+
+  assert_eq!(0xFF, cpu.stack_pointer);
+  assert_eq!(0x42, cpu.register_a);
+}
+
+#[test]
+fn test_pla_3rd_stack_pop() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x01FF, 0x42);
+  cpu.mem_write(0x01FE, 0x41);
+  cpu.mem_write(0x01FD, 0x40);
+  cpu.stack_pointer = 0xFC;
+  cpu.load_and_run(vec![0x68, 0x00]);
+
+  assert_eq!(0xFD, cpu.stack_pointer);
+  assert_eq!(0x40, cpu.register_a);
+}
+
+#[test]
+fn test_pla_stack_overflow() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x01FF, 0x41);
+  cpu.mem_write(0x0100, 0x42);
+  cpu.stack_pointer = 0xFF;
+  cpu.load_and_run(vec![0x68, 0x00]);
+
+  cpu.dump_non_empty_memory();
+  assert_eq!(0x00, cpu.stack_pointer);
+  assert_eq!(0x42, cpu.register_a);
 }
 
 #[test]
