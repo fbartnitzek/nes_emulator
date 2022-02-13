@@ -143,6 +143,8 @@ impl CPU {
         0x58 => self.cli(),
         0xB8 => self.clv(),
 
+        0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1  => self.cmp(&opcode.mode),
+
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
         0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode.mode),
@@ -194,6 +196,22 @@ impl CPU {
 
   fn clv(&mut self) {
     self.status.remove(CpuFlags::OVERFLOW)
+  }
+
+  fn cmp(&mut self, mode: &AddressingMode) {
+    self.compare(mode, self.register_a);
+  }
+
+  fn compare(&mut self, mode: &AddressingMode, reference: u8) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+    if reference >= data {
+      self.status.insert(CpuFlags::CARRY)
+    } else {
+      self.status.remove(CpuFlags::CARRY)
+    }
+    // Z,C,N = A-M
+    self.update_zero_and_negative_flags(reference.wrapping_sub(data))
   }
 
   fn dec(&mut self, mode: &AddressingMode) {
