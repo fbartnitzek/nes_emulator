@@ -139,43 +139,31 @@ impl CPU {
         }
 
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
-
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
-
         0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode.mode),
 
         0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode.mode),
-
         0x86 | 0x96 | 0x8E => self.stx(&opcode.mode),
-
         0x84 | 0x94 | 0x8C => self.sty(&opcode.mode),
 
         0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(&opcode.mode),
-
         0xCA => self.dex(),
-
         0x88 => self.dey(),
 
         0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(&opcode.mode),
-
         0xE8 => self.inx(),
-
         0xC8 => self.iny(),
 
         0x48 => self.pha(),
-
+        0x08 => self.php(),
         0x68 => self.pla(),
+        0x28 => self.plp(),
 
         0xAA => self.tax(),
-
         0xA8 => self.tay(),
-
         0xBA => self.tsx(),
-
         0x8A => self.txa(),
-
         0x9A => self.txs(),
-
         0x98 => self.tya(),
 
         _ => todo!()
@@ -266,9 +254,17 @@ impl CPU {
     self.stack_push(self.register_a);
   }
 
+  fn php(&mut self) {
+    self.stack_push(self.status.bits);
+  }
+
   fn pla(&mut self) {
     self.register_a = self.stack_pop();
     self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn plp(&mut self) {
+    self.status.bits = self.stack_pop();
   }
 
   fn tax(&mut self) {

@@ -172,6 +172,31 @@ fn test_pha_stack_overflow() {
 }
 
 #[test]
+fn test_php_push_processor_status() {
+  let mut cpu = CPU::new();
+  cpu.status = CpuFlags::NEGATIV | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE;
+
+  cpu.load_and_run(vec![0x08, 0x00]);
+
+  assert_eq!(0xFE, cpu.stack_pointer);
+  assert_eq!(0x85, cpu.mem_read(0x01FF)); // 0x04 + 0x01 + 0x80 = 0x85
+}
+
+#[test]
+fn test_plp_pull_processor_status() {
+  let mut cpu = CPU::new();
+  cpu.mem_write(0x01FF, 0x85);  // 0x04 + 0x01 + 0x80 = 0x85
+  cpu.stack_pointer = 0xFE;
+
+  cpu.load_and_run(vec![0x28, 0x00]);
+
+  assert_eq!(0xFF, cpu.stack_pointer);
+  // additional break as program stopped
+  assert_eq!(CpuFlags::NEGATIV | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK,
+             cpu.status);
+}
+
+#[test]
 fn test_pla_pull_accumulator_from_stack() {
   let mut cpu = CPU::new();
 
