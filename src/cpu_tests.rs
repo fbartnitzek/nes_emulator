@@ -1,36 +1,6 @@
 use crate::cpu::{CPU, CpuFlags, Mem};
 
 #[test]
-fn test_lda_immediate_load_data() {
-  let mut cpu = CPU::new();
-
-  cpu.load_and_run(vec![0xA9, 0x05, 0x00]);
-
-  assert_eq!(0x05, cpu.register_a);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
-}
-
-#[test]
-fn test_lda_zero_flag() {
-  let mut cpu = CPU::new();
-
-  cpu.load_and_run(vec![0xA9, 0x00, 0x00]);
-
-  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
-}
-
-#[test]
-fn test_tax_transfer_a_to_x() {
-  let mut cpu = CPU::new();
-  cpu.register_a = 10;
-
-  cpu.load_and_run(vec![0xAA, 0x00]);
-
-  assert_eq!(10, cpu.register_x)
-}
-
-#[test]
 fn test_dec_decrement_memory_zero_page() {
   let mut cpu = CPU::new();
 
@@ -117,6 +87,26 @@ fn test_5_ops_working_together() {
 }
 
 #[test]
+fn test_lda_immediate_load_data() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xA9, 0x05, 0x00]);
+
+  assert_eq!(0x05, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+}
+
+#[test]
+fn test_lda_zero_flag() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xA9, 0x00, 0x00]);
+
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+}
+
+#[test]
 fn test_lda_from_memory() {
   let mut cpu = CPU::new();
   cpu.mem_write(0x10, 0x55);
@@ -124,6 +114,34 @@ fn test_lda_from_memory() {
   cpu.load_and_run(vec![0xA5, 0x10, 0x00]);
 
   assert_eq!(0x55, cpu.register_a);
+}
+
+#[test]
+fn test_ldx_immediate() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xA2, 0x42, 0x00]);
+
+  assert_eq!(0x42, cpu.register_x);
+}
+
+#[test]
+fn test_ldy_immediate() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xA0, 0x42, 0x00]);
+
+  assert_eq!(cpu.register_y, 0x42);
+}
+
+#[test]
+fn test_reset() {
+  let mut cpu = CPU::new();
+
+  cpu.reset();
+
+  assert_eq!(CpuFlags::INTERRUPT_DISABLE, cpu.status & CpuFlags::INTERRUPT_DISABLE);
+  assert_eq!(CpuFlags::BREAK2, cpu.status & CpuFlags::BREAK2);
 }
 
 #[test]
@@ -211,15 +229,6 @@ fn test_sta_indirect_y() {
 }
 
 #[test]
-fn test_ldx_immediate() {
-  let mut cpu = CPU::new();
-
-  cpu.load_and_run(vec![0xA2, 0x42, 0x00]);
-
-  assert_eq!(0x42, cpu.register_x);
-}
-
-#[test]
 fn test_stx_zero_page() {
   let mut cpu = CPU::new();
   cpu.register_x = 0x42;
@@ -227,15 +236,6 @@ fn test_stx_zero_page() {
 
   cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read(0x02));
-}
-
-#[test]
-fn test_ldy_immediate() {
-  let mut cpu = CPU::new();
-
-  cpu.load_and_run(vec![0xA0, 0x42, 0x00]);
-
-  assert_eq!(cpu.register_y, 0x42);
 }
 
 #[test]
@@ -251,13 +251,13 @@ fn test_sty_zero_page_x() {
 }
 
 #[test]
-fn test_reset() {
+fn test_tax_transfer_a_to_x() {
   let mut cpu = CPU::new();
+  cpu.register_a = 10;
 
-  cpu.reset();
+  cpu.load_and_run(vec![0xAA, 0x00]);
 
-  assert_eq!(CpuFlags::INTERRUPT_DISABLE, cpu.status & CpuFlags::INTERRUPT_DISABLE);
-  assert_eq!(CpuFlags::BREAK2, cpu.status & CpuFlags::BREAK2);
+  assert_eq!(10, cpu.register_x)
 }
 
 #[test]
