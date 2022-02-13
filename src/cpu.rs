@@ -155,6 +155,8 @@ impl CPU {
 
         0x88 => self.dey(),
 
+        0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(&opcode.mode),
+
         0xE8 => self.inx(),
 
         0xC8 => self.iny(),
@@ -235,6 +237,14 @@ impl CPU {
   fn dey(&mut self) {
     self.register_y = self.register_y.wrapping_sub(1);
     self.update_zero_and_negative_flags(self.register_y);
+  }
+
+  fn inc(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+    let new_value = value.wrapping_add(1);
+    self.mem_write(addr, new_value);
+    self.update_zero_and_negative_flags(new_value);
   }
 
   fn inx(&mut self) {

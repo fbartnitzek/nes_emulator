@@ -69,6 +69,17 @@ fn test_dey_decrement_y() {
 }
 
 #[test]
+fn test_inc_increment_memory_zero_page_x() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x0021, 0x0041);
+  cpu.register_x = 0x01;
+  cpu.load_and_run(vec![0xF6, 0x20, 0x00]);
+
+  assert_eq!(0x0042, cpu.mem_read(0x0021))
+}
+
+#[test]
 fn test_inx_increment_x() {
   let mut cpu = CPU::new();
   cpu.register_x = 10;

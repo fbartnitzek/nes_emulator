@@ -51,7 +51,10 @@ lazy_static! {
     OpCode::new(0xCA, "DEX", 1, 2, AddressingMode::Immediate),
     OpCode::new(0x88, "DEY", 1, 2, AddressingMode::Immediate),
     OpCode::new(0x49, "EOR", 2, 2, AddressingMode::Immediate), // todo
-    OpCode::new(0xE6, "INC", 2, 2, AddressingMode::Immediate), // todo
+    OpCode::new(0xE6, "INC", 2, 5, AddressingMode::ZeroPage),
+    OpCode::new(0xF6, "INC", 2, 6, AddressingMode::ZeroPage_X),
+    OpCode::new(0xEE, "INC", 3, 6, AddressingMode::Absolute),
+    OpCode::new(0xFE, "INC", 3, 7, AddressingMode::Absolute_X),
     OpCode::new(0xE8, "INX", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0xC8, "INY", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0x4C, "JMP", 1, 2, AddressingMode::NoneAddressing), //todo
