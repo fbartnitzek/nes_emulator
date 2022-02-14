@@ -111,7 +111,9 @@ lazy_static! {
 
     OpCode::new(0x2A, "ROL", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x6A, "ROR", 1, 2, AddressingMode::NoneAddressing), //todo
-    OpCode::new(0x40, "RTI", 1, 2, AddressingMode::NoneAddressing), //todo
+
+    OpCode::new(0x40, "RTI", 1, 6, AddressingMode::NoneAddressing),
+
     OpCode::new(0x60, "RTS", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0xE9, "SBC", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x38, "SEC", 1, 2, AddressingMode::NoneAddressing), //todo

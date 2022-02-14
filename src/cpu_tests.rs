@@ -302,6 +302,23 @@ fn test_plp_pull_processor_status() {
 }
 
 #[test]
+fn test_rti_return_from_interrupt() {
+  let mut cpu = CPU::new();
+  cpu.mem_write(0x0181, 0x85);  // 0x04 + 0x01 + 0x80 = 0x85
+  cpu.mem_write(0x0182, 0x34);
+  cpu.mem_write(0x0183, 0x12);
+  cpu.stack_pointer = 0x80;
+
+  cpu.load_and_run(vec![0x40, 0x00]);
+
+  cpu.dump_non_empty_memory();
+  assert_eq!(0x83, cpu.stack_pointer);
+  assert_eq!(0x1234 + 1, cpu.program_counter);
+  assert_eq!(CpuFlags::NEGATIV | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK,
+             cpu.status);
+}
+
+#[test]
 fn test_pla_pull_accumulator_from_stack() {
   let mut cpu = CPU::new();
 
