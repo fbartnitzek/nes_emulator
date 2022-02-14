@@ -134,7 +134,11 @@ impl CPU {
 
       match code {
         0x00 => {
-          self.status.insert(CpuFlags::BREAK);
+          // ignore all break-flags, no check after that...
+          // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+          // self.status.insert(CpuFlags::BREAK);
+          // self.status.insert(CpuFlags::BREAK2);
+          // self.status.insert(CpuFlags::INTERRUPT_DISABLE);
           return;
         }
 
@@ -306,7 +310,11 @@ impl CPU {
   }
 
   fn php(&mut self) {
-    self.stack_push(self.status.bits);
+    let mut flags = self.status.clone();
+    // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+    flags.insert(CpuFlags::BREAK);
+    flags.insert(CpuFlags::BREAK2);
+    self.stack_push(flags.bits);
   }
 
   fn pla(&mut self) {
@@ -316,10 +324,17 @@ impl CPU {
 
   fn plp(&mut self) {
     self.status.bits = self.stack_pop();
+    // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+    self.status.remove(CpuFlags::BREAK);
+    self.status.insert(CpuFlags::BREAK2);
   }
 
   fn rti(&mut self) {
     self.status.bits = self.stack_pop();
+    // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+    self.status.remove(CpuFlags::BREAK);
+    self.status.insert(CpuFlags::BREAK2);
+
     self.program_counter = self.stack_pop_u16();
   }
 
