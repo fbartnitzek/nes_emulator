@@ -9,6 +9,7 @@ fn test_adc_add_with_no_carry() {
 
   assert_eq!(0x63, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
 }
 
 #[test]
@@ -21,6 +22,7 @@ fn test_adc_add_with_resulting_carry() {
 
   assert_eq!(0x11, cpu.register_a);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
 }
 
 #[test]
@@ -34,9 +36,49 @@ fn test_adc_add_with_carry_in() {
 
   assert_eq!(0x64, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
 }
 
-// todo: sign-bit incorrect...?
+// overflow examples, see: http://www.6502.org/tutorials/vflag.html
+
+#[test]
+fn test_adc_add_with_positive_overflow() {
+  let mut cpu = CPU::new();
+
+  // 127 + 1 = 128
+  cpu.register_a = 0x7F;
+  cpu.load_and_run(vec![0x69, 0x01, 0x00]);
+
+  assert_eq!(0x80, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::OVERFLOW, cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_adc_add_no_overflow() {
+  let mut cpu = CPU::new();
+
+  // 1 + -1 = 128
+  cpu.register_a = 0x01;
+  cpu.load_and_run(vec![0x69, 0xFF, 0x00]);
+
+  assert_eq!(0x00, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_adc_add_with_overflow_negative() {
+  let mut cpu = CPU::new();
+
+  // -128 + -1 = -129
+  cpu.register_a = 0x80;
+  cpu.load_and_run(vec![0x69, 0xFF, 0x00]);
+
+  assert_eq!(0x7F, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::OVERFLOW, cpu.status & CpuFlags::OVERFLOW);
+}
 
 #[test]
 fn test_clc_clear_carry_flag() {

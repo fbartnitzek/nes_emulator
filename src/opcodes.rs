@@ -24,7 +24,7 @@ impl OpCode {
 // see https://web.archive.org/web/20170224121759/http://www.obelisk.me.uk/6502/reference.html#TAX
 lazy_static! {
   pub static ref CPU_OPS_CODES: Vec<OpCode> = vec![
-    OpCode::new(0x69, "ADC", 2, 2, AddressingMode::Immediate),
+    OpCode::new(0x69, "ADC", 2, 2, AddressingMode::Immediate),  // overflow-flag
     OpCode::new(0x65, "ADC", 2, 3, AddressingMode::ZeroPage),
     OpCode::new(0x75, "ADC", 2, 4, AddressingMode::ZeroPage_X),
     OpCode::new(0x6D, "ADC", 3, 4, AddressingMode::Absolute),
@@ -38,7 +38,7 @@ lazy_static! {
     OpCode::new(0x90, "BCC", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xB0, "BCS", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xF0, "BEQ", 2, 2, AddressingMode::Immediate), // todo
-    OpCode::new(0x24, "BIT", 2, 2, AddressingMode::Immediate), // todo
+    OpCode::new(0x24, "BIT", 2, 2, AddressingMode::Immediate), // todo  // overflow-flag
     OpCode::new(0x30, "BMI", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xD0, "BNE", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0x10, "BPL", 2, 2, AddressingMode::Immediate), // todo
@@ -131,7 +131,7 @@ lazy_static! {
     OpCode::new(0x40, "RTI", 1, 6, AddressingMode::NoneAddressing),
 
     OpCode::new(0x60, "RTS", 1, 2, AddressingMode::NoneAddressing), //todo
-    OpCode::new(0xE9, "SBC", 1, 2, AddressingMode::NoneAddressing), //todo
+    OpCode::new(0xE9, "SBC", 1, 2, AddressingMode::NoneAddressing), //todo    // overflow-flag
     OpCode::new(0x38, "SEC", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0xF8, "SED", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x78, "SEI", 1, 2, AddressingMode::NoneAddressing), //todo

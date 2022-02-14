@@ -205,7 +205,12 @@ impl CPU {
     let sum = self.register_a as u16 + data as u16 + carry;
     self.status.set(CpuFlags::CARRY, sum > 0xFF);
 
-    self.register_a = sum as u8;
+    let result = sum as u8;
+    // some highest bit set...
+    self.status.set(CpuFlags::OVERFLOW,
+                    (data ^ result) & (result ^ self.register_a) & 0x80 != 0);
+
+    self.register_a = result;
     self.update_zero_and_negative_flags(self.register_a);
   }
 
