@@ -142,6 +142,8 @@ impl CPU {
           return;
         }
 
+        0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
+
         0x18 => self.clc(),
         0xD8 => self.cld(),
         0x58 => self.cli(),
@@ -190,6 +192,20 @@ impl CPU {
         self.program_counter += (opcode.len - 1) as u16;
       }
     }
+  }
+
+  fn adc(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+    self.add_to_acc(data);
+  }
+
+  fn add_to_acc(&mut self, data: u8) {
+    let sum = self.register_a as u16 + data as u16;
+    self.status.set(CpuFlags::CARRY, sum > 0xFF);
+
+    self.register_a = sum as u8;
+    self.update_zero_and_negative_flags(self.register_a);
   }
 
   fn clc(&mut self) {

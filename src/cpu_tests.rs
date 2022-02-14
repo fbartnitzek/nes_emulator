@@ -1,6 +1,32 @@
 use crate::cpu::{CPU, CpuFlags, Mem};
 
 #[test]
+fn test_adc_add_with_no_carry() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0x21;
+
+  cpu.load_and_run(vec![0x69, 0x42, 0x00]);
+
+  assert_eq!(0x63, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+}
+
+#[test]
+fn test_adc_add_with_resulting_carry() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0xF0;
+  cpu.mem_write(0x42, 0x21);
+
+  cpu.load_and_run(vec![0x65, 0x42, 0x00]);
+
+  assert_eq!(0x11, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+}
+
+// todo: carry in
+// todo: sign-bit incorrect...?
+
+#[test]
 fn test_clc_clear_carry_flag() {
   let mut cpu = CPU::new();
 
