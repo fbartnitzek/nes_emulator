@@ -341,6 +341,12 @@ impl CPU {
       let result = self.register_a.rotate_left(1);
       self.set_rotate_flags(self.register_a, result);
       self.register_a = result;
+    } else {
+      let addr = self.get_operand_address(mode);
+      let value = self.mem_read(addr);
+      let result = value.rotate_left(1);
+      self.set_rotate_flags(value, result);
+      self.mem_write(addr, result);
     }
   }
 

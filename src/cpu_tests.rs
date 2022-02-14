@@ -322,21 +322,39 @@ fn test_rti_return_from_interrupt() {
 fn test_rol_rotate_left_accumulator() {
   let mut cpu = CPU::new();
   cpu.register_a = 0b1100_0011;
+
   cpu.load_and_run(vec![0x2A, 0x00]);
 
-  cpu.register_a = 0b1000_0111;
+  assert_eq!(0b1000_0111, cpu.register_a);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
   assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
 }
 
 #[test]
 fn test_rol_rotate_left_accumulator_zero() {
   let mut cpu = CPU::new();
   cpu.register_a = 0b0000_0000;
+
   cpu.load_and_run(vec![0x2A, 0x00]);
 
-  cpu.register_a = 0b0000_0000;
+  assert_eq!(0b0000_0000, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
   assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+}
+
+#[test]
+fn test_rol_rotate_left_absolute() {
+  let mut cpu = CPU::new();
+  cpu.mem_write(0x1234, 0b0010_1010);
+
+  cpu.load_and_run(vec![0x2E, 0x34, 0x12, 0x00]);
+
+  assert_eq!(0b0101_0100, cpu.mem_read_u16(0x1234));
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
 }
 
 #[test]
