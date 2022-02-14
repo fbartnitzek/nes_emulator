@@ -201,7 +201,8 @@ impl CPU {
   }
 
   fn add_to_acc(&mut self, data: u8) {
-    let sum = self.register_a as u16 + data as u16;
+    let carry = if self.status.contains(CpuFlags::CARRY) {1} else { 0};
+    let sum = self.register_a as u16 + data as u16 + carry;
     self.status.set(CpuFlags::CARRY, sum > 0xFF);
 
     self.register_a = sum as u8;

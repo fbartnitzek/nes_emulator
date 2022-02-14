@@ -23,7 +23,19 @@ fn test_adc_add_with_resulting_carry() {
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
 }
 
-// todo: carry in
+#[test]
+fn test_adc_add_with_carry_in() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0x42;
+  cpu.status.insert(CpuFlags::CARRY);
+  cpu.mem_write(0x42, 0x21);
+
+  cpu.load_and_run(vec![0x65, 0x42, 0x00]);
+
+  assert_eq!(0x64, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+}
+
 // todo: sign-bit incorrect...?
 
 #[test]
