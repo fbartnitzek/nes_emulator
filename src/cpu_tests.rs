@@ -358,6 +358,32 @@ fn test_rol_rotate_left_absolute() {
 }
 
 #[test]
+fn test_ror_rotate_right_accumulator() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0b1100_0011;
+
+  cpu.load_and_run(vec![0x6A, 0x00]);
+
+  assert_eq!(0b1110_0001, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+}
+
+#[test]
+fn test_ror_rotate_right_zero_page() {
+  let mut cpu = CPU::new();
+  cpu.mem_write(0x0034, 0b0010_1010);
+
+  cpu.load_and_run(vec![0x66, 0x34, 0x00]);
+
+  assert_eq!(0b0001_0101, cpu.mem_read_u16(0x0034));
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+}
+
+#[test]
 fn test_pla_pull_accumulator_from_stack() {
   let mut cpu = CPU::new();
 

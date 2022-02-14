@@ -173,6 +173,7 @@ impl CPU {
         0x28 => self.plp(),
 
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
+        0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(&opcode.mode),
         0x40 => self.rti(),
 
         0xAA => self.tax(),
@@ -339,13 +340,39 @@ impl CPU {
   fn rol(&mut self, mode: &AddressingMode) {
     if matches!(mode, AddressingMode::NoneAddressing) {
       let result = self.register_a.rotate_left(1);
-      self.set_rotate_flags(self.register_a, result);
+      self.status.set(CpuFlags::CARRY, Self::highest_bit_set(self.register_a));
+      self.update_zero_and_negative_flags(result);
       self.register_a = result;
     } else {
       let addr = self.get_operand_address(mode);
       let value = self.mem_read(addr);
       let result = value.rotate_left(1);
-      self.set_rotate_flags(value, result);
+      self.status.set(CpuFlags::CARRY, Self::highest_bit_set(value));
+      self.update_zero_and_negative_flags(result);
+      self.mem_write(addr, result);
+    }
+  }
+
+  fn highest_bit_set(value: u8) -> bool {
+    value & 0b1000_0000 != 0
+  }
+
+  fn lowest_bit_set(value: u8) -> bool {
+    value & 0b0000_0001 != 0
+  }
+
+  fn ror(&mut self, mode: &AddressingMode) {
+    if matches!(mode, AddressingMode::NoneAddressing) {
+      let result = self.register_a.rotate_right(1);
+      self.status.set(CpuFlags::CARRY, Self::lowest_bit_set(self.register_a));
+      self.update_zero_and_negative_flags(result);
+      self.register_a = result;
+    } else {
+      let addr = self.get_operand_address(mode);
+      let value = self.mem_read(addr);
+      let result = value.rotate_right(1);
+      self.status.set(CpuFlags::CARRY, Self::lowest_bit_set(value));
+      self.update_zero_and_negative_flags(result);
       self.mem_write(addr, result);
     }
   }
@@ -393,12 +420,6 @@ impl CPU {
     let lo = self.stack_pop() as u16;
     let hi = self.stack_pop() as u16;
     hi << 8 | lo
-  }
-
-  fn set_rotate_flags(&mut self, previous: u8, new: u8) {
-    self.status.set(CpuFlags::CARRY, previous & 0b1000_0000 != 0);
-    self.status.set(CpuFlags::ZERO, new == 0);
-    self.status.set(CpuFlags::NEGATIV, new & 0b1000_0000 != 0);
   }
 
   fn update_zero_and_negative_flags(&mut self, result: u8) {
