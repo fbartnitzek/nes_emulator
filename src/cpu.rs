@@ -149,7 +149,7 @@ impl CPU {
         0x58 => self.cli(),
         0xB8 => self.clv(),
 
-        0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1  => self.cmp(&opcode.mode),
+        0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(&opcode.mode),
         0xE0 | 0xE4 | 0xEC => self.cpx(&opcode.mode),
         0xC0 | 0xC4 | 0xCC => self.cpy(&opcode.mode),
 
@@ -178,6 +178,8 @@ impl CPU {
         0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(&opcode.mode),
         0x40 => self.rti(),
 
+        0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(&opcode.mode),
+
         0xAA => self.tax(),
         0xA8 => self.tay(),
         0xBA => self.tsx(),
@@ -200,8 +202,16 @@ impl CPU {
     self.add_to_acc(data);
   }
 
+  fn sbc(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    // A - B = A + (-B). And -B = !B + 1
+    self.add_to_acc(value.wrapping_neg());
+  }
+
   fn add_to_acc(&mut self, data: u8) {
-    let carry = if self.status.contains(CpuFlags::CARRY) {1} else { 0};
+    let carry = if self.status.contains(CpuFlags::CARRY) { 1 } else { 0 };
     let sum = self.register_a as u16 + data as u16 + carry;
     self.status.set(CpuFlags::CARRY, sum > 0xFF);
 

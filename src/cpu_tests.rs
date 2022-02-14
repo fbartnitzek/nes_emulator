@@ -39,7 +39,7 @@ fn test_adc_add_with_carry_in() {
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
 }
 
-// overflow examples, see: http://www.6502.org/tutorials/vflag.html
+// overflow adc & sbc examples, see: http://www.6502.org/tutorials/vflag.html
 
 #[test]
 fn test_adc_add_with_positive_overflow() {
@@ -77,6 +77,59 @@ fn test_adc_add_with_overflow_negative() {
 
   assert_eq!(0x7F, cpu.register_a);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::OVERFLOW, cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_sdc_subtract_with_default_carry() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0x42;
+  cpu.mem_write(0x3412, 0x21);
+
+  cpu.load_and_run(vec![0xED, 0x12, 0x34, 0x00]);
+
+  assert_eq!(0x21, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_sdc_subtract_with_carry_in() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0x42;
+  cpu.status.insert(CpuFlags::CARRY);
+  cpu.mem_write(0x3412, 0x21);
+
+  cpu.load_and_run(vec![0xED, 0x12, 0x34, 0x00]);
+
+  assert_eq!(0x22, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_sbc_subtract_without_flags() {
+  let mut cpu = CPU::new();
+
+  // 0 - 1 = -1
+  cpu.register_a = 0x00;
+  cpu.load_and_run(vec![0xE9, 0x01, 0x00]);
+
+  assert_eq!(0xFF, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_sbc_subtract_with_overflow() {
+  let mut cpu = CPU::new();
+
+  // 127 - -1 = 128
+  cpu.register_a = 0x7F;
+  cpu.load_and_run(vec![0xE9, 0xFF, 0x00]);
+
+  assert_eq!(0x80, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
   assert_eq!(CpuFlags::OVERFLOW, cpu.status & CpuFlags::OVERFLOW);
 }
 
