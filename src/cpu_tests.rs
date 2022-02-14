@@ -319,6 +319,27 @@ fn test_rti_return_from_interrupt() {
 }
 
 #[test]
+fn test_rol_rotate_left_accumulator() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0b1100_0011;
+  cpu.load_and_run(vec![0x2A, 0x00]);
+
+  cpu.register_a = 0b1000_0111;
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);
+}
+
+#[test]
+fn test_rol_rotate_left_accumulator_zero() {
+  let mut cpu = CPU::new();
+  cpu.register_a = 0b0000_0000;
+  cpu.load_and_run(vec![0x2A, 0x00]);
+
+  cpu.register_a = 0b0000_0000;
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+}
+
+#[test]
 fn test_pla_pull_accumulator_from_stack() {
   let mut cpu = CPU::new();
 

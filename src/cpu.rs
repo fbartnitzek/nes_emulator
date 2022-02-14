@@ -172,6 +172,7 @@ impl CPU {
         0x68 => self.pla(),
         0x28 => self.plp(),
 
+        0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
         0x40 => self.rti(),
 
         0xAA => self.tax(),
@@ -221,12 +222,9 @@ impl CPU {
   fn compare(&mut self, mode: &AddressingMode, reference: u8) {
     let addr = self.get_operand_address(mode);
     let data = self.mem_read(addr);
-    if reference >= data {
-      self.status.insert(CpuFlags::CARRY)
-    } else {
-      self.status.remove(CpuFlags::CARRY)
-    }
+
     // Z,C,N = A-M
+    self.status.set(CpuFlags::CARRY, reference >= data);
     self.update_zero_and_negative_flags(reference.wrapping_sub(data))
   }
 
@@ -338,6 +336,14 @@ impl CPU {
     self.program_counter = self.stack_pop_u16();
   }
 
+  fn rol(&mut self, mode: &AddressingMode) {
+    if matches!(mode, AddressingMode::NoneAddressing) {
+      let result = self.register_a.rotate_left(1);
+      self.set_rotate_flags(self.register_a, result);
+      self.register_a = result;
+    }
+  }
+
   fn tax(&mut self) {
     self.register_x = self.register_a;
     self.update_zero_and_negative_flags(self.register_x);
@@ -383,18 +389,15 @@ impl CPU {
     hi << 8 | lo
   }
 
-  fn update_zero_and_negative_flags(&mut self, result: u8) {
-    if result == 0 { // Z zero flag
-      self.status.insert(CpuFlags::ZERO);
-    } else {
-      self.status.remove(CpuFlags::ZERO);
-    }
+  fn set_rotate_flags(&mut self, previous: u8, new: u8) {
+    self.status.set(CpuFlags::CARRY, previous & 0b1000_0000 != 0);
+    self.status.set(CpuFlags::ZERO, new == 0);
+    self.status.set(CpuFlags::NEGATIV, new & 0b1000_0000 != 0);
+  }
 
-    if result & 0b1000_0000 != 0 { // N negative flag
-      self.status.insert(CpuFlags::NEGATIV);
-    } else {
-      self.status.remove(CpuFlags::NEGATIV);
-    }
+  fn update_zero_and_negative_flags(&mut self, result: u8) {
+    self.status.set(CpuFlags::ZERO, result == 0);
+    self.status.set(CpuFlags::NEGATIV, result & 0b1000_0000 != 0);
   }
 
   fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
