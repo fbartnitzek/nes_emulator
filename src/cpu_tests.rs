@@ -651,6 +651,17 @@ fn test_lsr_logical_shift_right_absolute() {
 }
 
 #[test]
+fn test_nop_no_operation() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xEA]);
+
+  assert_eq!(0x8002, cpu.program_counter);
+  assert_eq!(CpuFlags::BREAK2 | CpuFlags::INTERRUPT_DISABLE, cpu.status);
+  assert_eq!(0xFF, cpu.stack_pointer);
+}
+
+#[test]
 fn test_pha_push_accumulator_to_stack() {
   let mut cpu = CPU::new();
 

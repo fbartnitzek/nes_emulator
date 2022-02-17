@@ -186,6 +186,8 @@ impl CPU {
 
         0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
 
+        0xEA => self.nop(),
+
         0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode.mode),
         0x86 | 0x96 | 0x8E => self.stx(&opcode.mode),
         0x84 | 0x94 | 0x8C => self.sty(&opcode.mode),
@@ -466,6 +468,10 @@ impl CPU {
       self.mem_write(addr, value);
       self.update_zero_and_negative_flags(value);
     }
+  }
+
+  fn nop(&mut self) {
+    // nothing
   }
 
   fn sta(&mut self, mode: &AddressingMode) {
