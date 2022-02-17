@@ -875,6 +875,15 @@ fn test_reset() {
 }
 
 #[test]
+fn test_sec_set_carry_flag() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x38]);
+
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+}
+
+#[test]
 fn test_sta_zero_page() {
   let mut cpu = CPU::new();
   cpu.register_a = 0x42;

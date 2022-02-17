@@ -176,7 +176,7 @@ lazy_static! {
     OpCode::new(0xE1, "SBC", 2, 6, AddressingMode::Indirect_X),
     OpCode::new(0xF1, "SBC", 2, 5 /* +1 */, AddressingMode::Indirect_Y),
 
-    OpCode::new(0x38, "SEC", 1, 2, AddressingMode::NoneAddressing), //todo
+    OpCode::new(0x38, "SEC", 1, 2, AddressingMode::NoneAddressing),
     OpCode::new(0xF8, "SED", 1, 2, AddressingMode::NoneAddressing), //todo
     OpCode::new(0x78, "SEI", 1, 2, AddressingMode::NoneAddressing), //todo
 

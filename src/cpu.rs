@@ -205,6 +205,8 @@ impl CPU {
 
         0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(&opcode.mode),
 
+        0x38 => self.sec(),
+
         0xAA => self.tax(),
         0xA8 => self.tay(),
         0xBA => self.tsx(),
@@ -569,6 +571,10 @@ impl CPU {
       self.update_zero_and_negative_flags(result);
       self.mem_write(addr, result);
     }
+  }
+
+  fn sec(&mut self) {
+    self.status.insert(CpuFlags::CARRY);
   }
 
   fn tax(&mut self) {
