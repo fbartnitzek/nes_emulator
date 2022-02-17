@@ -195,6 +195,7 @@ impl CPU {
 
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
         0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(&opcode.mode),
+        0x60 => self.rts(),
         0x40 => self.rti(),
 
         0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(&opcode.mode),
@@ -417,6 +418,13 @@ impl CPU {
   fn jsr(&mut self){
     self.stack_push_u16(self.program_counter + 2 - 1);
     self.program_counter = self.mem_read_u16(self.program_counter);
+  }
+
+  fn rts(&mut self){
+    // -1 based on https://web.archive.org/web/20170224121759/http://www.obelisk.me.uk/6502/reference.html#RTS
+    // +1 based on http://www.6502.org/tutorials/6502opcodes.html#RTS
+    // take +1 for now, as jsr already subtracts 1 ...
+    self.program_counter = self.stack_pop_u16() +1;
   }
 
   fn lda(&mut self, mode: &AddressingMode) {

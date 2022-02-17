@@ -557,11 +557,23 @@ fn test_jsr_jump_to_subroutine() {
 
   cpu.load_and_run(vec![0x20, 0x12, 0x34]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0xFD, cpu.stack_pointer);
   assert_eq!(0x80, cpu.mem_read(0x01FF));
   assert_eq!(0x02, cpu.mem_read(0x01FE));
   assert_eq!(0x3413, cpu.program_counter);
+}
+
+#[test]
+fn test_rts_return_from_subroutine() {
+  let mut cpu = CPU::new();
+
+  cpu.stack_pointer = 0xFD;
+  cpu.mem_write(0x01FF, 0x80);
+  cpu.mem_write(0x01FE, 0x21);
+  cpu.load_and_run(vec![0x60]);
+
+  cpu.dump_non_empty_memory();
+  assert_eq!(0x8021 + 1/* RTS */ + 1/*0x00*/, cpu.program_counter);
 }
 
 #[test]

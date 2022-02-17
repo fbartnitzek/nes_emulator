@@ -152,7 +152,7 @@ lazy_static! {
 
     OpCode::new(0x40, "RTI", 1, 6, AddressingMode::NoneAddressing),
 
-    OpCode::new(0x60, "RTS", 1, 2, AddressingMode::NoneAddressing), //todo
+    OpCode::new(0x60, "RTS", 1, 6, AddressingMode::NoneAddressing),
 
     OpCode::new(0xE9, "SBC", 2, 2, AddressingMode::Immediate),
     OpCode::new(0xE5, "SBC", 2, 3, AddressingMode::ZeroPage),
