@@ -282,13 +282,15 @@ fn test_bpl_branch_if_overflow_set_with_overflow() {
 fn test_bit_bit_test_result_negative_overflow() {
   let mut cpu = CPU::new();
 
-  cpu.register_a = 0b1101_1001;
+  cpu.register_a = 0b0001_1001;
   cpu.mem_write(0x0042, 0b1111_0000);
   cpu.load_and_run(vec![0x24, 0x42, 0x00]);
 
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::OVERFLOW, cpu.status & CpuFlags::OVERFLOW);
   assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
+  assert_eq!(0b0001_1001, cpu.register_a);
+  assert_eq!(0b1111_0000, cpu.mem_read(0x0042));
 }
 
 #[test]
@@ -296,14 +298,14 @@ fn test_bit_bit_test_result_zero() {
   let mut cpu = CPU::new();
 
   cpu.register_a = 0b0000_1001;
-  cpu.mem_write(0x0042, 0b1111_0000);
+  cpu.mem_write(0x0042, 0b0000_0000);
   cpu.load_and_run(vec![0x2C, 0x42, 0x00, 0x00]);
 
   assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::OVERFLOW);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
-  assert_eq!(0b_0000_1001, cpu.register_a);
-  assert_eq!(0b_1111_0000, cpu.mem_read(0x0042));
+  assert_eq!(0b0000_1001, cpu.register_a);
+  assert_eq!(0b0000_0000, cpu.mem_read(0x0042));
 }
 
 #[test]

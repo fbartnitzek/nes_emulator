@@ -305,9 +305,9 @@ impl CPU {
     let addr = self.get_operand_address(mode);
     let data = self.mem_read(addr);
 
-    let result = data.bitand(self.register_a);
-    self.status.set(CpuFlags::OVERFLOW, result & 0b0100_0000 != 0);
-    self.update_zero_and_negative_flags(result);
+    self.status.set(CpuFlags::ZERO, data.bitand(self.register_a) == 0);
+    self.status.set(CpuFlags::OVERFLOW, data & 0b0100_0000 != 0);
+    self.status.set(CpuFlags::NEGATIVE, data & 0b1000_0000 != 0);
   }
 
   fn clc(&mut self) {
