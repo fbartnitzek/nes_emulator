@@ -150,7 +150,7 @@ fn test_and_acc_and_immediate_memory() {
 
   assert_eq!(0b0001_0001, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);  // todo rename
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -163,7 +163,7 @@ fn test_and_acc_and_absolute_memory() {
 
   assert_eq!(0b1000_0001, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
-  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);  // todo rename
+  assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -216,7 +216,7 @@ fn test_cmp_compare_acc_with_memory_absolute_equal() {
 
   assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -229,7 +229,7 @@ fn test_cmp_compare_acc_with_memory_absolute_lower() {
 
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -242,7 +242,7 @@ fn test_cmp_compare_acc_with_memory_absolute_greater() {
 
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -255,7 +255,7 @@ fn test_cpx_compare_x_with_memory_absolute_equal() {
 
   assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -268,7 +268,7 @@ fn test_cpy_compare_y_with_memory_absolute_equal() {
 
   assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -356,7 +356,7 @@ fn test_lda_immediate_load_data() {
 
   assert_eq!(0x05, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
 }
 
 #[test]
@@ -436,7 +436,7 @@ fn test_pha_stack_overflow() {
 #[test]
 fn test_php_push_processor_status() {
   let mut cpu = CPU::new();
-  cpu.status = CpuFlags::NEGATIV | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE;
+  cpu.status = CpuFlags::NEGATIVE | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE;
 
   cpu.load_and_run(vec![0x08, 0x00]);
 
@@ -454,7 +454,7 @@ fn test_plp_pull_processor_status() {
 
   assert_eq!(0xFF, cpu.stack_pointer);
   // additional break as program stopped
-  assert_eq!(CpuFlags::NEGATIV | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
+  assert_eq!(CpuFlags::NEGATIVE | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
              cpu.status);
 }
 
@@ -471,7 +471,7 @@ fn test_rti_return_from_interrupt() {
   cpu.dump_non_empty_memory();
   assert_eq!(0x83, cpu.stack_pointer);
   assert_eq!(0x1234 + 1, cpu.program_counter);
-  assert_eq!(CpuFlags::NEGATIV | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
+  assert_eq!(CpuFlags::NEGATIVE | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
              cpu.status);
 }
 
@@ -484,7 +484,7 @@ fn test_rol_rotate_left_accumulator() {
 
   assert_eq!(0b1000_0111, cpu.register_a);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
 }
 
@@ -497,7 +497,7 @@ fn test_rol_rotate_left_accumulator_zero() {
 
   assert_eq!(0b0000_0000, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
   assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
 }
 
@@ -510,7 +510,7 @@ fn test_rol_rotate_left_absolute() {
 
   assert_eq!(0b0101_0100, cpu.mem_read_u16(0x1234));
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
 }
 
@@ -523,7 +523,7 @@ fn test_ror_rotate_right_accumulator() {
 
   assert_eq!(0b1110_0001, cpu.register_a);
   assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
 }
 
@@ -536,7 +536,7 @@ fn test_ror_rotate_right_zero_page() {
 
   assert_eq!(0b0001_0101, cpu.mem_read_u16(0x0034));
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
-  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
 }
 

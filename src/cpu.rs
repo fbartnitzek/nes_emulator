@@ -12,7 +12,7 @@ bitflags! {
     const BREAK = 0x10;
     const BREAK2 = 0x20;
     const OVERFLOW = 0x40;
-    const NEGATIV = 0x80;
+    const NEGATIVE = 0x80;
   }
 }
 
@@ -466,7 +466,7 @@ impl CPU {
 
   fn update_zero_and_negative_flags(&mut self, result: u8) {
     self.status.set(CpuFlags::ZERO, result == 0);
-    self.status.set(CpuFlags::NEGATIV, result & 0b1000_0000 != 0);
+    self.status.set(CpuFlags::NEGATIVE, result & 0b1000_0000 != 0);
   }
 
   fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
