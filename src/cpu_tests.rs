@@ -452,6 +452,31 @@ fn test_dey_decrement_y() {
 }
 
 #[test]
+fn test_eor_exclusive_or_acc_with_immediate() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b0000_1111;
+  cpu.load_and_run(vec![0x49, 0b0101_0101, 0x00]);
+
+  assert_eq!(0b0101_1010, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
+fn test_eor_exclusive_or_acc_with_absolute() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b0000_1111;
+  cpu.mem_write(0x1234, 0b0000_1111);
+  cpu.load_and_run(vec![0x4D, 0x34, 0x12, 0x00]);
+
+  assert_eq!(0x00, cpu.register_a);
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
 fn test_inc_increment_memory_zero_page_x() {
   let mut cpu = CPU::new();
 

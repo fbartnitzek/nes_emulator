@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::ops::{BitAnd};
+use std::ops::{BitAnd, BitXor};
 use crate::opcodes;
 
 bitflags! {
@@ -167,6 +167,16 @@ impl CPU {
         0xE0 | 0xE4 | 0xEC => self.cpx(&opcode.mode),
         0xC0 | 0xC4 | 0xCC => self.cpy(&opcode.mode),
 
+        0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(&opcode.mode),
+        0xCA => self.dex(),
+        0x88 => self.dey(),
+
+        0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => self.eor(&opcode.mode),
+
+        0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(&opcode.mode),
+        0xE8 => self.inx(),
+        0xC8 => self.iny(),
+
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
         0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode.mode),
@@ -174,14 +184,6 @@ impl CPU {
         0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode.mode),
         0x86 | 0x96 | 0x8E => self.stx(&opcode.mode),
         0x84 | 0x94 | 0x8C => self.sty(&opcode.mode),
-
-        0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(&opcode.mode),
-        0xCA => self.dex(),
-        0x88 => self.dey(),
-
-        0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(&opcode.mode),
-        0xE8 => self.inx(),
-        0xC8 => self.iny(),
 
         0x48 => self.pha(),
         0x08 => self.php(),
@@ -381,6 +383,14 @@ impl CPU {
   fn iny(&mut self) {
     self.register_y = self.register_y.wrapping_add(1);
     self.update_zero_and_negative_flags(self.register_y);
+  }
+
+  fn eor(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_a = self.register_a.bitxor(value);
+    self.update_zero_and_negative_flags(self.register_a);
   }
 
   fn lda(&mut self, mode: &AddressingMode) {
