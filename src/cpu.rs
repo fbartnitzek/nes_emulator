@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::ops::BitAnd;
+use std::ops::{BitAnd};
 use crate::opcodes;
 
 bitflags! {
@@ -145,6 +145,7 @@ impl CPU {
 
         0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
         0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
+        0x0A | 0x06 | 0x16 | 0x0E | 0x1E  => self.asl(&opcode.mode),
 
         0x18 => self.clc(),
         0xD8 => self.cld(),
@@ -232,6 +233,22 @@ impl CPU {
 
     self.register_a = value.bitand(self.register_a);
     self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn asl(&mut self, mode: &AddressingMode) {
+    if matches!(mode, AddressingMode::NoneAddressing) {
+      self.status.set(CpuFlags::CARRY, self.register_a & 0b1000_0000 != 0);
+      self.register_a <<= 1;
+      self.update_zero_and_negative_flags(self.register_a);
+    } else {
+      let addr = self.get_operand_address(mode);
+      let mut value = self.mem_read(addr);
+      self.status.set(CpuFlags::CARRY, value & 0b1000_0000 != 0);
+
+      value <<= 1;
+      self.mem_write(addr, value);
+      self.update_zero_and_negative_flags(value);
+    }
   }
 
   fn clc(&mut self) {

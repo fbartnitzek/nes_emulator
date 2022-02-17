@@ -42,7 +42,13 @@ lazy_static! {
     OpCode::new(0x21, "AND", 2, 6 /* + 1 */, AddressingMode::Indirect_X),
     OpCode::new(0x31, "AND", 2, 5 /* + 1 */, AddressingMode::Indirect_Y),
 
-    OpCode::new(0x0A, "ASL", 2, 2, AddressingMode::Immediate), // todo
+    OpCode::new(0x0A, "ASL", 1, 2, AddressingMode::NoneAddressing),
+    OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
+    OpCode::new(0x16, "ASL", 2, 6, AddressingMode::ZeroPage_X),
+    OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
+    OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::Absolute_X),
+
+
     OpCode::new(0x90, "BCC", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xB0, "BCS", 2, 2, AddressingMode::Immediate), // todo
     OpCode::new(0xF0, "BEQ", 2, 2, AddressingMode::Immediate), // todo

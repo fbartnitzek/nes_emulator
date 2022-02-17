@@ -167,6 +167,32 @@ fn test_and_acc_and_absolute_memory() {
 }
 
 #[test]
+fn test_asl_arithmetic_shift_left_acc() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b0101_1001;
+  cpu.load_and_run(vec![0x0A, 0x00]);
+
+  assert_eq!(0b1011_0010, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
+fn test_asl_arithmetic_shift_left_zero() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x0042, 0b1000_0000);
+  cpu.load_and_run(vec![0x06, 0x42, 0x00]);
+
+  assert_eq!(0b0000_0000, cpu.mem_read(0x0042));
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
 fn test_clc_clear_carry_flag() {
   let mut cpu = CPU::new();
 
@@ -428,7 +454,6 @@ fn test_pha_stack_overflow() {
   cpu.stack_pointer = 0x00;
   cpu.load_and_run(vec![0x48, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0xFF, cpu.stack_pointer);
   assert_eq!(0x42, cpu.mem_read(0x0100));
 }
@@ -468,7 +493,6 @@ fn test_rti_return_from_interrupt() {
 
   cpu.load_and_run(vec![0x40, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x83, cpu.stack_pointer);
   assert_eq!(0x1234 + 1, cpu.program_counter);
   assert_eq!(CpuFlags::NEGATIVE | CpuFlags::CARRY | CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
@@ -575,7 +599,6 @@ fn test_pla_stack_overflow() {
   cpu.stack_pointer = 0xFF;
   cpu.load_and_run(vec![0x68, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x00, cpu.stack_pointer);
   assert_eq!(0x42, cpu.register_a);
 }
@@ -597,7 +620,6 @@ fn test_sta_zero_page() {
 
   cpu.load_and_run(vec![0x85, 0x21, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read_u16(0x0021));
 }
 
@@ -609,7 +631,6 @@ fn test_sta_zero_page_x() {
 
   cpu.load_and_run(vec![0x95, 0x09, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read_u16(0x0089));
 }
 
@@ -631,7 +652,6 @@ fn test_sta_absolute_x() {
 
   cpu.load_and_run(vec![0x9D, 0x23, 0x12, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read_u16(0x1237));
 }
 
@@ -643,7 +663,6 @@ fn test_sta_absolute_y() {
 
   cpu.load_and_run(vec![0x99, 0x23, 0x12, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read_u16(0x1237));
 }
 
@@ -657,7 +676,6 @@ fn test_sta_indirect_x() {
 
   cpu.load_and_run(vec![0x81, 0x11, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read_u16(0x0705));
 }
 
@@ -670,7 +688,6 @@ fn test_sta_indirect_y() {
 
   cpu.load_and_run(vec![0x91, 0x11, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read_u16(0x0031));
 }
 
@@ -680,7 +697,6 @@ fn test_stx_zero_page() {
   cpu.register_x = 0x42;
   cpu.load_and_run(vec![0x86, 0x02, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read(0x02));
 }
 
@@ -692,7 +708,6 @@ fn test_sty_zero_page_x() {
 
   cpu.load_and_run(vec![0x94, 0x01, 0x00]);
 
-  cpu.dump_non_empty_memory();
   assert_eq!(0x42, cpu.mem_read(0x21));
 }
 
