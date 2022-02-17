@@ -261,35 +261,35 @@ impl CPU {
   }
 
   fn bcc(&mut self) {
-    self.branch(!self.status.intersects(CpuFlags::CARRY))
+    self.branch(!self.status.contains(CpuFlags::CARRY))
   }
 
   fn bcs(&mut self) {
-    self.branch(self.status.intersects(CpuFlags::CARRY))
+    self.branch(self.status.contains(CpuFlags::CARRY))
   }
 
   fn beq(&mut self) {
-    self.branch(self.status.intersects(CpuFlags::ZERO))
+    self.branch(self.status.contains(CpuFlags::ZERO))
   }
 
   fn bmi(&mut self) {
-    self.branch(self.status.intersects(CpuFlags::NEGATIVE))
+    self.branch(self.status.contains(CpuFlags::NEGATIVE))
   }
 
   fn bne(&mut self) {
-    self.branch(!self.status.intersects(CpuFlags::ZERO))
+    self.branch(!self.status.contains(CpuFlags::ZERO))
   }
 
   fn bpl(&mut self) {
-    self.branch(!self.status.intersects(CpuFlags::NEGATIVE))
+    self.branch(!self.status.contains(CpuFlags::NEGATIVE))
   }
 
   fn bvc(&mut self) {
-    self.branch(!self.status.intersects(CpuFlags::OVERFLOW))
+    self.branch(!self.status.contains(CpuFlags::OVERFLOW))
   }
 
   fn bvs(&mut self) {
-    self.branch(self.status.intersects(CpuFlags::OVERFLOW))
+    self.branch(self.status.contains(CpuFlags::OVERFLOW))
   }
 
   fn branch(&mut self, condition: bool) {
