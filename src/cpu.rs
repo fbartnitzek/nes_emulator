@@ -156,6 +156,8 @@ impl CPU {
         0x50 => self.bvc(),
         0x70 => self.bvs(),
 
+        0x24 | 0x2C => self.bit(&opcode.mode),
+
         0x18 => self.clc(),
         0xD8 => self.cld(),
         0x58 => self.cli(),
@@ -297,6 +299,15 @@ impl CPU {
       let value = self.mem_read(self.program_counter);
       self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(value as u16);
     }
+  }
+
+  fn bit(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+
+    let result = data.bitand(self.register_a);
+    self.status.set(CpuFlags::OVERFLOW, result & 0b0100_0000 != 0);
+    self.update_zero_and_negative_flags(result);
   }
 
   fn clc(&mut self) {

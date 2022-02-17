@@ -57,11 +57,10 @@ lazy_static! {
     OpCode::new(0x50, "BVC", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
     OpCode::new(0x70, "BVS", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
 
-    OpCode::new(0x24, "BIT", 2, 2, AddressingMode::Immediate), // todo  // overflow-flag
+    OpCode::new(0x24, "BIT", 2, 3, AddressingMode::ZeroPage),
+    OpCode::new(0x2C, "BIT", 3, 4, AddressingMode::Absolute),
 
     OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
-
-
 
     OpCode::new(0x18, "CLC", 1, 2, AddressingMode::Immediate),
     OpCode::new(0xD8, "CLD", 1, 2, AddressingMode::Immediate),
