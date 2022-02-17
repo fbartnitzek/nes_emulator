@@ -884,6 +884,24 @@ fn test_sec_set_carry_flag() {
 }
 
 #[test]
+fn test_sed_set_decimal_flag() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xF8]);
+
+  assert_eq!(CpuFlags::DECIMAL_MODE, cpu.status & CpuFlags::DECIMAL_MODE);
+}
+
+#[test]
+fn test_sei_set_interrupt_disable() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x78]);
+
+  assert_eq!(CpuFlags::INTERRUPT_DISABLE, cpu.status & CpuFlags::INTERRUPT_DISABLE);
+}
+
+#[test]
 fn test_sta_zero_page() {
   let mut cpu = CPU::new();
   cpu.register_a = 0x42;

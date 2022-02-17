@@ -206,6 +206,8 @@ impl CPU {
         0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(&opcode.mode),
 
         0x38 => self.sec(),
+        0xF8 => self.sed(),
+        0x78 => self.sei(),
 
         0xAA => self.tax(),
         0xA8 => self.tay(),
@@ -575,6 +577,14 @@ impl CPU {
 
   fn sec(&mut self) {
     self.status.insert(CpuFlags::CARRY);
+  }
+
+  fn sed(&mut self) {
+    self.status.insert(CpuFlags::DECIMAL_MODE);
+  }
+
+  fn sei(&mut self) {
+    self.status.insert(CpuFlags::INTERRUPT_DISABLE);
   }
 
   fn tax(&mut self) {
