@@ -547,9 +547,21 @@ fn test_jmp_jump_indirect_buggy_page_boundary() {
   cpu.mem_write(0x3100, 0x50);
   cpu.load_and_run(vec![0x6C, 0xFF, 0x30]);
 
-  cpu.dump_non_empty_memory();
   assert_ne!(0x5081, cpu.program_counter);
   assert_eq!(0x4081, cpu.program_counter);
+}
+
+#[test]
+fn test_jsr_jump_to_subroutine() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x20, 0x12, 0x34]);
+
+  cpu.dump_non_empty_memory();
+  assert_eq!(0xFD, cpu.stack_pointer);
+  assert_eq!(0x80, cpu.mem_read(0x01FF));
+  assert_eq!(0x02, cpu.mem_read(0x01FE));
+  assert_eq!(0x3413, cpu.program_counter);
 }
 
 #[test]

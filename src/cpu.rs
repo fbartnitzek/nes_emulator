@@ -178,6 +178,7 @@ impl CPU {
         0xC8 => self.iny(),
 
         0x4C | 0x6c => self.jmp(&opcode.mode),
+        0x20 => self.jsr(),
 
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
@@ -413,6 +414,11 @@ impl CPU {
     }
   }
 
+  fn jsr(&mut self){
+    self.stack_push_u16(self.program_counter + 2 - 1);
+    self.program_counter = self.mem_read_u16(self.program_counter);
+  }
+
   fn lda(&mut self, mode: &AddressingMode) {
     let addr = self.get_operand_address(mode);
     let value = self.mem_read(addr);
@@ -557,6 +563,13 @@ impl CPU {
   fn stack_push(&mut self, data: u8) {
     self.mem_write(STACK_AREA as u16 + self.stack_pointer as u16, data);
     self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+  }
+
+  fn stack_push_u16(&mut self, data: u16) {
+    let hi = (data >> 8) as u8;
+    let lo = (data & 0x0F) as u8;
+    self.stack_push(hi);
+    self.stack_push(lo);
   }
 
   fn stack_pop(&mut self) -> u8 {
