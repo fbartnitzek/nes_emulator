@@ -1,6 +1,14 @@
 use crate::cpu::{CPU, CpuFlags, Mem};
 
 #[test]
+fn test_5_ops_working_together() {
+  let mut cpu = CPU::new();
+  cpu.load_reset_and_run(vec![0xA9, 0xC0, 0xAA, 0xE8, 0x00]);
+
+  assert_eq!(0xC1, cpu.register_x);
+}
+
+#[test]
 fn test_adc_add_with_no_carry() {
   let mut cpu = CPU::new();
   cpu.register_a = 0x21;
@@ -131,6 +139,31 @@ fn test_sbc_subtract_with_overflow() {
   assert_eq!(0x80, cpu.register_a);
   assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::CARRY);
   assert_eq!(CpuFlags::OVERFLOW, cpu.status & CpuFlags::OVERFLOW);
+}
+
+#[test]
+fn test_and_acc_and_immediate_memory() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b1001_1001;
+  cpu.load_and_run(vec![0x29, 0b0111_0111, 0x00]);
+
+  assert_eq!(0b0001_0001, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIV);  // todo rename
+}
+
+#[test]
+fn test_and_acc_and_absolute_memory() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b1001_1001;
+  cpu.mem_write(0x1234, 0b1000_0011);
+  cpu.load_and_run(vec![0x2D, 0x34, 0x12, 0x00]);
+
+  assert_eq!(0b1000_0001, cpu.register_a);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::NEGATIV, cpu.status & CpuFlags::NEGATIV);  // todo rename
 }
 
 #[test]
@@ -313,15 +346,6 @@ fn test_iny_increment_y() {
   cpu.load_reset_and_run(vec![0xC8, 0x00]);
 
   assert_eq!(1, cpu.register_y);
-}
-
-#[test]
-fn test_5_ops_working_together() {
-  let mut cpu = CPU::new();
-
-  cpu.load_reset_and_run(vec![0xA9, 0xC0, 0xAA, 0xE8, 0x00]);
-
-  assert_eq!(0xC1, cpu.register_x);
 }
 
 #[test]
