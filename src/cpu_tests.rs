@@ -525,6 +525,34 @@ fn test_jmp_jump_absolute() {
 }
 
 #[test]
+fn test_jmp_jump_indirect_no_page_boundary() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x3000, 0x12);
+  cpu.mem_write(0x3001, 0x34);
+  cpu.load_and_run(vec![0x6C, 0x00, 0x30]);
+
+  assert_eq!(0x3413, cpu.program_counter);
+}
+
+#[test]
+fn test_jmp_jump_indirect_buggy_page_boundary() {
+  // For example if address $3000 contains $40, $30FF contains $80, and $3100 contains $50,
+  // the result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you intended
+  // i.e. the 6502 took the low byte of the address from $30FF and the high byte from $3000.
+  let mut cpu = CPU::new();
+
+  cpu.mem_write(0x3000, 0x40);
+  cpu.mem_write(0x30FF, 0x80);
+  cpu.mem_write(0x3100, 0x50);
+  cpu.load_and_run(vec![0x6C, 0xFF, 0x30]);
+
+  cpu.dump_non_empty_memory();
+  assert_ne!(0x5081, cpu.program_counter);
+  assert_eq!(0x4081, cpu.program_counter);
+}
+
+#[test]
 fn test_lda_immediate_load_data() {
   let mut cpu = CPU::new();
 
@@ -589,7 +617,7 @@ fn test_pha_3_stack_pushes() {
 
   cpu.load_reset_and_run(vec![0xA9, 0x20, 0x48, 0xA9, 0x21, 0x48, 0xA9, 0x22, 0x48]);
 
-  cpu.dump_non_empty_memory();
+  // cpu.dump_non_empty_memory();
   assert_eq!(0xFC, cpu.stack_pointer);
   assert_eq!(0x20, cpu.mem_read(0x01FF));
   assert_eq!(0x21, cpu.mem_read(0x01FE));

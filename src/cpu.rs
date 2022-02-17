@@ -145,7 +145,7 @@ impl CPU {
 
         0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
         0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
-        0x0A | 0x06 | 0x16 | 0x0E | 0x1E  => self.asl(&opcode.mode),
+        0x0A | 0x06 | 0x16 | 0x0E | 0x1E => self.asl(&opcode.mode),
 
         0x90 => self.bcc(),
         0xB0 => self.bcs(),
@@ -396,10 +396,20 @@ impl CPU {
   }
 
   fn jmp(&mut self, mode: &AddressingMode) {
-    if matches!(mode, AddressingMode::Absolute) {
-      self.program_counter = self.mem_read_u16(self.program_counter);
-    } else {
+    let addr = self.mem_read_u16(self.program_counter);
 
+    if matches!(mode, AddressingMode::Absolute) {
+      self.program_counter = addr;
+    } else {
+      let indirect_addr =
+        if addr.bitand(0x00FF) == 0x00FF {
+          let lo = self.mem_read(addr);
+          let hi = self.mem_read(addr & 0xFF00);
+          (hi as u16) << 8 | (lo as u16)
+        } else {
+          self.mem_read_u16(addr)
+        };
+      self.program_counter = indirect_addr;
     }
   }
 
