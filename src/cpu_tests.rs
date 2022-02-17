@@ -510,9 +510,18 @@ fn test_inx_overflow() {
 #[test]
 fn test_iny_increment_y() {
   let mut cpu = CPU::new();
-  cpu.load_reset_and_run(vec![0xC8, 0x00]);
+  cpu.load_reset_and_run(vec![0xC8]);
 
   assert_eq!(1, cpu.register_y);
+}
+
+#[test]
+fn test_jmp_jump_absolute() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x4C, 0x34, 0x12]);
+
+  assert_eq!(0x1235, cpu.program_counter);
 }
 
 #[test]

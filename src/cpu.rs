@@ -177,6 +177,8 @@ impl CPU {
         0xE8 => self.inx(),
         0xC8 => self.iny(),
 
+        0x4C | 0x6c => self.jmp(&opcode.mode),
+
         0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
         0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode.mode),
@@ -391,6 +393,14 @@ impl CPU {
 
     self.register_a = self.register_a.bitxor(value);
     self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn jmp(&mut self, mode: &AddressingMode) {
+    if matches!(mode, AddressingMode::Absolute) {
+      self.program_counter = self.mem_read_u16(self.program_counter);
+    } else {
+
+    }
   }
 
   fn lda(&mut self, mode: &AddressingMode) {
