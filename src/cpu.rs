@@ -147,6 +147,8 @@ impl CPU {
         0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
         0x0A | 0x06 | 0x16 | 0x0E | 0x1E  => self.asl(&opcode.mode),
 
+        0x90 => self.bcc(),
+
         0x18 => self.clc(),
         0xD8 => self.cld(),
         0x58 => self.cli(),
@@ -248,6 +250,13 @@ impl CPU {
       value <<= 1;
       self.mem_write(addr, value);
       self.update_zero_and_negative_flags(value);
+    }
+  }
+
+  fn bcc(&mut self) {
+    if !self.status.intersects(CpuFlags::CARRY) {
+      let value = self.mem_read(self.program_counter);
+      self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(value as u16);
     }
   }
 

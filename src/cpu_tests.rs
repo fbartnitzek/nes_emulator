@@ -193,6 +193,25 @@ fn test_asl_arithmetic_shift_left_zero() {
 }
 
 #[test]
+fn test_bcc_branch_if_carry_clear_with_carry() {
+  let mut cpu = CPU::new();
+
+  cpu.status.insert(CpuFlags::CARRY);
+  cpu.load_and_run(vec![0x90, 0x42, 0x00]);
+
+  assert_eq!(0x8003, cpu.program_counter);
+}
+
+#[test]
+fn test_bcc_branch_if_carry_clear_no_carry() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x90, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
 fn test_clc_clear_carry_flag() {
   let mut cpu = CPU::new();
 
