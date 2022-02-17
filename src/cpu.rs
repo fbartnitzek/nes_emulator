@@ -149,6 +149,10 @@ impl CPU {
 
         0x90 => self.bcc(),
         0xB0 => self.bcs(),
+        0xF0 => self.beq(),
+        0x30 => self.bmi(),
+        0xD0 => self.bne(),
+        0x10 => self.bpl(),
 
         0x18 => self.clc(),
         0xD8 => self.cld(),
@@ -260,6 +264,22 @@ impl CPU {
 
   fn bcs(&mut self) {
     self.branch(self.status.intersects(CpuFlags::CARRY))
+  }
+
+  fn beq(&mut self) {
+    self.branch(self.status.intersects(CpuFlags::ZERO))
+  }
+
+  fn bmi(&mut self) {
+    self.branch(self.status.intersects(CpuFlags::NEGATIVE))
+  }
+
+  fn bne(&mut self) {
+    self.branch(!self.status.intersects(CpuFlags::ZERO))
+  }
+
+  fn bpl(&mut self) {
+    self.branch(!self.status.intersects(CpuFlags::NEGATIVE))
   }
 
   fn branch(&mut self, condition: bool) {

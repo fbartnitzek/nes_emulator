@@ -222,6 +222,44 @@ fn test_bcs_branch_if_carry_set_with_carry() {
 }
 
 #[test]
+fn test_beq_branch_if_equal_with_zero() {
+  let mut cpu = CPU::new();
+
+  cpu.status.insert(CpuFlags::ZERO);
+  cpu.load_and_run(vec![0xF0, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
+fn test_bmi_branch_if_minus_with_negative() {
+  let mut cpu = CPU::new();
+
+  cpu.status.insert(CpuFlags::NEGATIVE);
+  cpu.load_and_run(vec![0x30, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
+fn test_bne_branch_if_not_equal_without_zero() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0xD0, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
+fn test_bpl_branch_if_positive_without_negative() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x10, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
 fn test_clc_clear_carry_flag() {
   let mut cpu = CPU::new();
 
