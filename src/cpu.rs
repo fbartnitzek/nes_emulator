@@ -148,6 +148,7 @@ impl CPU {
         0x0A | 0x06 | 0x16 | 0x0E | 0x1E  => self.asl(&opcode.mode),
 
         0x90 => self.bcc(),
+        0xB0 => self.bcs(),
 
         0x18 => self.clc(),
         0xD8 => self.cld(),
@@ -254,7 +255,15 @@ impl CPU {
   }
 
   fn bcc(&mut self) {
-    if !self.status.intersects(CpuFlags::CARRY) {
+    self.branch(!self.status.intersects(CpuFlags::CARRY))
+  }
+
+  fn bcs(&mut self) {
+    self.branch(self.status.intersects(CpuFlags::CARRY))
+  }
+
+  fn branch(&mut self, condition: bool) {
+    if condition {
       let value = self.mem_read(self.program_counter);
       self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(value as u16);
     }
