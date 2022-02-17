@@ -625,6 +625,32 @@ fn test_ldy_immediate() {
 }
 
 #[test]
+fn test_lsr_logical_shift_right_acc() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b0100_0011;
+  cpu.load_and_run(vec![0x4A]);
+
+  assert_eq!(0b0010_0001, cpu.register_a);
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
+fn test_lsr_logical_shift_right_absolute() {
+  let mut cpu = CPU::new();
+
+  cpu.mem_write_u16(0x1234, 0b0000_0001);
+  cpu.load_and_run(vec![0x4E, 0x34, 0x12]);
+
+  assert_eq!(0b0000_0000, cpu.mem_read(0x1234));
+  assert_eq!(CpuFlags::CARRY, cpu.status & CpuFlags::CARRY);
+  assert_eq!(CpuFlags::ZERO, cpu.status & CpuFlags::ZERO);
+  assert_eq!(CpuFlags::empty(), cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
 fn test_pha_push_accumulator_to_stack() {
   let mut cpu = CPU::new();
 

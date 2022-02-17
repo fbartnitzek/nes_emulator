@@ -184,6 +184,8 @@ impl CPU {
         0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
         0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode.mode),
 
+        0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
+
         0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode.mode),
         0x86 | 0x96 | 0x8E => self.stx(&opcode.mode),
         0x84 | 0x94 | 0x8C => self.sty(&opcode.mode),
@@ -449,6 +451,21 @@ impl CPU {
 
     self.register_y = value;
     self.update_zero_and_negative_flags(self.register_y);
+  }
+
+  fn lsr(&mut self, mode: &AddressingMode) {
+    if matches!(mode, AddressingMode::Immediate){
+      self.status.set(CpuFlags::CARRY, self.register_a & 0x01 == 1);
+      self.register_a >>= 1;
+      self.update_zero_and_negative_flags(self.register_a);
+    } else {
+      let addr = self.get_operand_address(mode);
+      let mut value = self.mem_read(addr);
+      self.status.set(CpuFlags::CARRY, value & 0x01 == 1);
+      value >>= 1;
+      self.mem_write(addr, value);
+      self.update_zero_and_negative_flags(value);
+    }
   }
 
   fn sta(&mut self, mode: &AddressingMode) {
