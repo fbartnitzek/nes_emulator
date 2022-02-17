@@ -153,6 +153,8 @@ impl CPU {
         0x30 => self.bmi(),
         0xD0 => self.bne(),
         0x10 => self.bpl(),
+        0x50 => self.bvc(),
+        0x70 => self.bvs(),
 
         0x18 => self.clc(),
         0xD8 => self.cld(),
@@ -280,6 +282,14 @@ impl CPU {
 
   fn bpl(&mut self) {
     self.branch(!self.status.intersects(CpuFlags::NEGATIVE))
+  }
+
+  fn bvc(&mut self) {
+    self.branch(!self.status.intersects(CpuFlags::OVERFLOW))
+  }
+
+  fn bvs(&mut self) {
+    self.branch(self.status.intersects(CpuFlags::OVERFLOW))
   }
 
   fn branch(&mut self, condition: bool) {

@@ -54,13 +54,14 @@ lazy_static! {
     OpCode::new(0x30, "BMI", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
     OpCode::new(0xD0, "BNE", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
     OpCode::new(0x10, "BPL", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
+    OpCode::new(0x50, "BVC", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
+    OpCode::new(0x70, "BVS", 2, 2 /* +1 / +2 */, AddressingMode::Immediate),
 
     OpCode::new(0x24, "BIT", 2, 2, AddressingMode::Immediate), // todo  // overflow-flag
 
     OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
 
-    OpCode::new(0x50, "BVC", 2, 2, AddressingMode::Immediate), // todo
-    OpCode::new(0x70, "BVS", 2, 2, AddressingMode::Immediate), // todo
+
 
     OpCode::new(0x18, "CLC", 1, 2, AddressingMode::Immediate),
     OpCode::new(0xD8, "CLD", 1, 2, AddressingMode::Immediate),

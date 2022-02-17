@@ -260,6 +260,25 @@ fn test_bpl_branch_if_positive_without_negative() {
 }
 
 #[test]
+fn test_bvc_branch_if_overflow_clear_without_overflow() {
+  let mut cpu = CPU::new();
+
+  cpu.load_and_run(vec![0x50, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
+fn test_bpl_branch_if_overflow_set_with_overflow() {
+  let mut cpu = CPU::new();
+
+  cpu.status.insert(CpuFlags::OVERFLOW);
+  cpu.load_and_run(vec![0x70, 0x42, 0x00]);
+
+  assert_eq!(0x8045, cpu.program_counter);
+}
+
+#[test]
 fn test_clc_clear_carry_flag() {
   let mut cpu = CPU::new();
 
