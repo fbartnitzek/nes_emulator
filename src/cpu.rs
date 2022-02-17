@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::ops::{BitAnd, BitXor};
+use std::ops::{BitAnd, BitOr, BitXor};
 use crate::opcodes;
 
 bitflags! {
@@ -187,6 +187,7 @@ impl CPU {
         0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
 
         0xEA => self.nop(),
+        0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(&opcode.mode),
 
         0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode.mode),
         0x86 | 0x96 | 0x8E => self.stx(&opcode.mode),
@@ -472,6 +473,14 @@ impl CPU {
 
   fn nop(&mut self) {
     // nothing
+  }
+
+  fn ora(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+
+    self.register_a = self.register_a.bitor(data);
+    self.update_zero_and_negative_flags(self.register_a);
   }
 
   fn sta(&mut self, mode: &AddressingMode) {

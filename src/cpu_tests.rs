@@ -662,6 +662,28 @@ fn test_nop_no_operation() {
 }
 
 #[test]
+fn test_ora_logical_inclusive_or_acc_against_immediate() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b1000_0000;
+  cpu.load_and_run(vec![0x09, 0b0000_1111]);
+
+  assert_eq!(0b1000_1111, cpu.register_a);
+  assert_eq!(CpuFlags::NEGATIVE, cpu.status & CpuFlags::NEGATIVE);
+}
+
+#[test]
+fn test_ora_logical_inclusive_or_acc_against_zeropage() {
+  let mut cpu = CPU::new();
+
+  cpu.register_a = 0b1000_0000;
+  cpu.mem_write(0x1234, 0b0000_1111);
+  cpu.load_and_run(vec![0x0D, 0x34, 0x12]);
+
+  assert_eq!(0b1000_1111, cpu.register_a);
+}
+
+#[test]
 fn test_pha_push_accumulator_to_stack() {
   let mut cpu = CPU::new();
 
