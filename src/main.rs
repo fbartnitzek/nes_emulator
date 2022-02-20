@@ -14,7 +14,7 @@ use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::{Color, PixelFormatEnum};
-use crate::cpu::{CPU, Mem};
+use crate::cpu::{MyCPU, MyMem};
 
 fn main() {
     // init sdl2
@@ -62,7 +62,7 @@ fn main() {
     println!("Loading game into nes emulator with {} bytes", game_code.len());
 
     // load the game
-    let mut cpu = CPU::new();
+    let mut cpu = MyCPU::new();
     // cpu.load(game_code);
     cpu.load_with_address(game_code, 0x0600);
     cpu.reset();
@@ -89,7 +89,7 @@ fn main() {
 }
 
 
-fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
+fn handle_user_input(cpu: &mut MyCPU, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
         match event {
             Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), ..} => {
@@ -121,7 +121,7 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
     }
 }
 
-fn read_screen_state(cpu: &CPU, frame: &mut [u8; 32 * 3 * 32]) -> bool {
+fn read_screen_state(cpu: &MyCPU, frame: &mut [u8; 32 * 3 * 32]) -> bool {
     let mut frame_idx = 0;
     let mut update = false;
     for i in 0x0200..0x600 {

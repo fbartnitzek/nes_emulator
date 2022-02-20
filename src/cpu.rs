@@ -20,7 +20,7 @@ bitflags! {
 const STACK_AREA: u16 = 0x0100;
 const STACK_RESET: u8 = 0xFF;
 
-pub struct CPU {
+pub struct MyCPU {
   pub register_a: u8,
   pub register_x: u8,
   pub register_y: u8,
@@ -45,7 +45,7 @@ pub enum AddressingMode {
   NoneAddressing,
 }
 
-pub trait Mem {
+pub trait MyMem {
   fn mem_read(&self, addr: u16) -> u8;
 
   fn mem_write(&mut self, addr: u16, data: u8);
@@ -64,7 +64,7 @@ pub trait Mem {
   }
 }
 
-impl Mem for CPU {
+impl MyMem for MyCPU {
   fn mem_read(&self, addr: u16) -> u8 {
     self.memory[addr as usize]
   }
@@ -74,9 +74,9 @@ impl Mem for CPU {
   }
 }
 
-impl CPU {
+impl MyCPU {
   pub fn new() -> Self {
-    CPU {
+    MyCPU {
       register_a: 0,
       register_x: 0,
       register_y: 0,
@@ -136,7 +136,7 @@ impl CPU {
 
   pub fn run_with_callback<F>(&mut self, mut callback: F)
   where
-    F: FnMut(&mut CPU),
+    F: FnMut(&mut MyCPU),
   {
     let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
