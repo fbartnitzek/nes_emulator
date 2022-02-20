@@ -88,13 +88,15 @@ impl CPU {
     }
   }
 
-  pub fn dump_non_empty_memory(&mut self) {
+  pub fn dump_non_empty_memory(&self) -> String {
+    let mut dump = String::new();
     for (i, elem) in self.memory.iter().enumerate() {
       let value = *elem;
       if value > 0 {
-        println!("Memory {:x} = {:x}", i, value)
+        dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
       }
     }
+    return dump
   }
 
   pub fn load_reset_and_run(&mut self, program: Vec<u8>) {
@@ -113,6 +115,11 @@ impl CPU {
     self.mem_write_u16(0xFFFC, 0x8000);
   }
 
+  pub fn load_with_address(&mut self, program: Vec<u8>, start_address: u16) {
+    self.memory[start_address as usize .. (start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
+    self.mem_write_u16(0xFFFC, start_address);
+  }
+
   pub fn reset(&mut self) {
     self.register_a = 0;
     self.register_x = 0;
@@ -124,6 +131,13 @@ impl CPU {
   }
 
   pub fn run(&mut self) {
+    self.run_with_callback(|_| {});
+  }
+
+  pub fn run_with_callback<F>(&mut self, mut callback: F)
+  where
+    F: FnMut(&mut CPU),
+  {
     let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
     loop {
@@ -131,7 +145,13 @@ impl CPU {
       self.program_counter += 1;
       let program_counter_state = self.program_counter;
 
-      let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
+      let opcode = opcodes.get(&code)
+        .expect(&format!("OpCode {:#04x} is not recognized! (pc={:x}, registers={:b})\n{}",
+                         code, self.program_counter, self.status.bits(), self.dump_non_empty_memory()));
+
+      println!("opCode {} {:#04x} {}, pc={:#04x}, registers={:b}",
+               opcode.mnemonic, code, self.get_next_bytes(opcode.len),
+               self.program_counter, self.status.bits());
 
       match code {
         0x00 => {
@@ -222,7 +242,21 @@ impl CPU {
       if program_counter_state == self.program_counter {
         self.program_counter += (opcode.len - 1) as u16;
       }
+
+      callback(self);
     }
+  }
+
+  fn get_next_bytes(&self, len: u8) -> String {
+    if len == 2 {
+      return format!("{:#04x}     ", self.mem_read(self.program_counter));
+    }
+    if len == 3 {
+      return format!("{:#04x} {:#04x}",
+                     self.mem_read(self.program_counter),
+                     self.mem_read(self.program_counter+1));
+    }
+    return format!("         ");
   }
 
   fn adc(&mut self, mode: &AddressingMode) {
