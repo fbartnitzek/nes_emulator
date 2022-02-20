@@ -113,20 +113,6 @@ impl CPU {
   }
 
 
-  fn update_zero_and_negative_flags(&mut self, result: u8) {
-    if result == 0 {
-      self.status.insert(CpuFlags::ZERO);
-    } else {
-      self.status.remove(CpuFlags::ZERO);
-    }
-
-    if result >> 7 == 1 {
-      self.status.insert(CpuFlags::NEGATIVE);
-    } else {
-      self.status.remove(CpuFlags::NEGATIVE);
-    }
-  }
-
   pub fn load_and_run(&mut self, program: Vec<u8>) {
     self.load(program);
     self.reset();
@@ -155,7 +141,12 @@ impl CPU {
 
 
 
-
+  // fn branch(&mut self, condition: bool) {
+  //   if condition {
+  //     let value = self.mem_read(self.program_counter);
+  //     self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(value as u16);
+  //   }
+  // }
 
   fn branch(&mut self, condition: bool) {
     if condition {
@@ -692,6 +683,11 @@ impl CPU {
     let lo = self.stack_pop() as u16;
     let hi = self.stack_pop() as u16;
     hi << 8 | lo
+  }
+
+  fn update_zero_and_negative_flags(&mut self, result: u8) {
+    self.status.set(CpuFlags::ZERO, result == 0);
+    self.status.set(CpuFlags::NEGATIVE, result & 0b1000_0000 != 0);
   }
 }
 
