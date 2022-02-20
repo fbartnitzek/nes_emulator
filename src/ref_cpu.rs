@@ -112,26 +112,6 @@ impl CPU {
     }
   }
 
-  fn ldy(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let data = self.mem_read(addr);
-    self.register_y = data;
-    self.update_zero_and_negative_flags(self.register_y);
-  }
-
-  fn ldx(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let data = self.mem_read(addr);
-    self.register_x = data;
-    self.update_zero_and_negative_flags(self.register_x);
-  }
-
-  fn lda(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(&mode);
-    let value = self.mem_read(addr);
-    self.set_register_a(value);
-  }
-
   fn sta(&mut self, mode: &AddressingMode) {
     let addr = self.get_operand_address(mode);
     self.mem_write(addr, self.register_a);
@@ -355,6 +335,13 @@ impl CPU {
         0xE8 => self.inx(),
         0xC8 => self.iny(),
 
+        0x4C | 0x6c => self.jmp(&opcode.mode),
+        0x20 => self.jsr(),
+
+        0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode.mode),
+        0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode.mode),
+        0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode.mode),
+
         0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
 
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
@@ -363,10 +350,6 @@ impl CPU {
         0x38 => self.sec(),
 
 
-
-        0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
-          self.lda(&opcode.mode);
-        }
 
         0xAA => self.tax(),
 
@@ -406,39 +389,6 @@ impl CPU {
           self.ora(&opcode.mode);
         }
 
-        /* JMP Absolute */
-        0x4c => {
-          let mem_address = self.mem_read_u16(self.program_counter);
-          self.program_counter = mem_address;
-        }
-
-        /* JMP Indirect */
-        0x6c => {
-          let mem_address = self.mem_read_u16(self.program_counter);
-          // let indirect_ref = self.mem_read_u16(mem_address);
-          //6502 bug mode with with page boundary:
-          //  if address $3000 contains $40, $30FF contains $80, and $3100 contains $50,
-          // the result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you intended
-          // i.e. the 6502 took the low byte of the address from $30FF and the high byte from $3000
-
-          let indirect_ref = if mem_address & 0x00FF == 0x00FF {
-            let lo = self.mem_read(mem_address);
-            let hi = self.mem_read(mem_address & 0xFF00);
-            (hi as u16) << 8 | (lo as u16)
-          } else {
-            self.mem_read_u16(mem_address)
-          };
-
-          self.program_counter = indirect_ref;
-        }
-
-        /* JSR */
-        0x20 => {
-          self.stack_push_u16(self.program_counter + 2 - 1);
-          let target_address = self.mem_read_u16(self.program_counter);
-          self.program_counter = target_address
-        }
-
         /* RTS */
         0x60 => {
           self.program_counter = self.stack_pop_u16() + 1;
@@ -470,16 +420,6 @@ impl CPU {
         0x84 | 0x94 | 0x8c => {
           let addr = self.get_operand_address(&opcode.mode);
           self.mem_write(addr, self.register_y);
-        }
-
-        /* LDX */
-        0xa2 | 0xa6 | 0xb6 | 0xae | 0xbe => {
-          self.ldx(&opcode.mode);
-        }
-
-        /* LDY */
-        0xa0 | 0xa4 | 0xb4 | 0xac | 0xbc => {
-          self.ldy(&opcode.mode);
         }
 
         /* NOP */
@@ -691,6 +631,53 @@ impl CPU {
 
     self.register_a = self.register_a.bitxor(value);
     self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn jmp(&mut self, mode: &AddressingMode) {
+    let addr = self.mem_read_u16(self.program_counter);
+
+    if matches!(mode, AddressingMode::Absolute) {
+      self.program_counter = addr;
+    } else {
+      let indirect_addr =
+        if addr.bitand(0x00FF) == 0x00FF {
+          let lo = self.mem_read(addr);
+          let hi = self.mem_read(addr & 0xFF00);
+          (hi as u16) << 8 | (lo as u16)
+        } else {
+          self.mem_read_u16(addr)
+        };
+      self.program_counter = indirect_addr;
+    }
+  }
+
+  fn jsr(&mut self){
+    self.stack_push_u16(self.program_counter + 2 - 1);
+    self.program_counter = self.mem_read_u16(self.program_counter);
+  }
+
+  fn lda(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_a = value;
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn ldx(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_x = value;
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn ldy(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_y = value;
+    self.update_zero_and_negative_flags(self.register_y);
   }
 
   fn lsr(&mut self, mode: &AddressingMode) {
