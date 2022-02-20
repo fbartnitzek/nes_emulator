@@ -112,11 +112,6 @@ impl CPU {
     }
   }
 
-  // fn set_register_a(&mut self, value: u8) {
-  //   self.register_a = value;
-  //   self.update_zero_and_negative_flags(self.register_a);
-  // }
-
   fn tax(&mut self) {
     self.register_x = self.register_a;
     self.update_zero_and_negative_flags(self.register_x);
@@ -161,43 +156,6 @@ impl CPU {
 
     self.program_counter = self.mem_read_u16(0xFFFC);
   }
-
-
-  // /// note: ignoring decimal mode
-  // /// http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
-  // fn add_to_register_a(&mut self, data: u8) {
-  //   let sum = self.register_a as u16
-  //     + data as u16
-  //     + (if self.status.contains(CpuFlags::CARRY) {
-  //     1
-  //   } else {
-  //     0
-  //   }) as u16;
-  //
-  //   let carry = sum > 0xff;
-  //
-  //   if carry {
-  //     self.status.insert(CpuFlags::CARRY);
-  //   } else {
-  //     self.status.remove(CpuFlags::CARRY);
-  //   }
-  //
-  //   let result = sum as u8;
-  //
-  //   if (data ^ result) & (result ^ self.register_a) & 0x80 != 0 {
-  //     self.status.insert(CpuFlags::OVERFLOW);
-  //   } else {
-  //     self.status.remove(CpuFlags::OVERFLOW)
-  //   }
-  //
-  //   self.set_register_a(result);
-  // }
-
-  // fn sbc(&mut self, mode: &AddressingMode) {
-  //   let addr = self.get_operand_address(&mode);
-  //   let data = self.mem_read(addr);
-  //   self.add_to_register_a(((data as i8).wrapping_neg().wrapping_sub(1)) as u8);
-  // }
 
 
   fn stack_pop(&mut self) -> u8 {
@@ -332,16 +290,13 @@ impl CPU {
         0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(&opcode.mode),
 
         0x38 => self.sec(),
+        0xF8 => self.sed(),
+        0x78 => self.sei(),
 
 
 
         0xAA => self.tax(),
 
-
-
-        /* SEI */ 0x78 => self.status.insert(CpuFlags::INTERRUPT_DISABLE),
-
-        /* SED */ 0xf8 => self.status.insert(CpuFlags::DECIMAL_MODE),
 
         /* TAY */
         0xa8 => {
@@ -731,6 +686,14 @@ impl CPU {
 
   fn sec(&mut self) {
     self.status.insert(CpuFlags::CARRY);
+  }
+
+  fn sed(&mut self) {
+    self.status.insert(CpuFlags::DECIMAL_MODE);
+  }
+
+  fn sei(&mut self) {
+    self.status.insert(CpuFlags::INTERRUPT_DISABLE);
   }
 }
 
