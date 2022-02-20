@@ -147,7 +147,6 @@ impl MyCPU {
       let opcode = opcodes.get(&code)
         .expect(&format!("OpCode {:#04x} is not recognized! (pc={:x}, registers={:b})\n",
                          code, self.program_counter, self.status.bits()));
-                         // code, self.program_counter, self.status.bits(), self.dump_non_empty_memory()));
 
       println!("opCode {} {:#04x} {}, pc={:#04x}, registers={:b}",
                opcode.mnemonic, code, self.get_next_bytes(opcode.len),
