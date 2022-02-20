@@ -58,6 +58,29 @@ impl CPU {
     }
   }
 
+  pub fn dump_non_empty_memory(&self) -> String {
+    let mut dump = String::new();
+    for (i, elem) in self.memory.iter().enumerate() {
+      let value = *elem;
+      if value > 0 {
+        dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
+      }
+    }
+    return dump;
+  }
+
+  fn get_next_bytes(&self, len: u8) -> String {
+    if len == 2 {
+      return format!("{:#04x}     ", self.mem_read(self.program_counter));
+    }
+    if len == 3 {
+      return format!("{:#04x} {:#04x}",
+                     self.mem_read(self.program_counter),
+                     self.mem_read(self.program_counter + 1));
+    }
+    return format!("         ");
+  }
+
   fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
     match mode {
       AddressingMode::Immediate => self.program_counter,
@@ -155,20 +178,34 @@ impl CPU {
       self.program_counter += 1;
       let program_counter_state = self.program_counter;
 
-      let opcode = opcodes.get(&code).unwrap();
+      let opcode = opcodes.get(&code)
+        .expect(&format!("OpCode {:#04x} is not recognized! (pc={:x}, registers={:b})\n",
+                         code, self.program_counter, self.status.bits()));
+                         // code, self.program_counter, self.status.bits(), self.dump_non_empty_memory()));
+
+      println!("opCode {} {:#04x} {}, pc={:#04x}, registers={:b}",
+               opcode.mnemonic, code, self.get_next_bytes(opcode.len),
+               self.program_counter, self.status.bits());
 
       match code {
-        0x00 => return,
+        0x00 => {
+          // ignore all break-flags, no check after that...
+          // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+          // self.status.insert(CpuFlags::BREAK);
+          // self.status.insert(CpuFlags::BREAK2);
+          // self.status.insert(CpuFlags::INTERRUPT_DISABLE);
+          return;
+        }
 
-        0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
-        0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
-        0x0a | 0x06 | 0x16 | 0x0e | 0x1e => self.asl(&opcode.mode),
+        0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
+        0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
+        0x0A | 0x06 | 0x16 | 0x0E | 0x1E => self.asl(&opcode.mode),
 
         0x90 => self.bcc(),
-        0xb0 => self.bcs(),
-        0xf0 => self.beq(),
+        0xB0 => self.bcs(),
+        0xF0 => self.beq(),
         0x30 => self.bmi(),
-        0xd0 => self.bne(),
+        0xD0 => self.bne(),
         0x10 => self.bpl(),
         0x50 => self.bvc(),
         0x70 => self.bvs(),
@@ -233,7 +270,7 @@ impl CPU {
         0x9A => self.txs(),
         0x98 => self.tya(),
 
-        _ => todo!(),
+        _ => todo!()
       }
 
       if program_counter_state == self.program_counter {

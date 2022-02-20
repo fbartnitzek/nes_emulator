@@ -64,8 +64,8 @@ fn main() {
     println!("Loading game into nes emulator with {} bytes", game_code.len());
 
     // load the game
-    // let mut cpu = MyCPU::new();
-    let mut cpu = CPU::new();
+    let mut cpu = MyCPU::new();
+    // let mut cpu = CPU::new();
     cpu.load_with_address(game_code, 0x0600);
 
     cpu.reset();
@@ -75,13 +75,13 @@ fn main() {
 
     // run game cycle
     cpu.run_with_callback(move |cpu| {
-        // handle_user_input(cpu, &mut event_pump);
-        handle_user_input_ref(cpu, &mut event_pump);
+        handle_user_input(cpu, &mut event_pump);
+        // handle_user_input_ref(cpu, &mut event_pump);
 
         cpu.mem_write(0xFE, rng.gen_range(1, 16));
 
-        // if read_screen_state(cpu, &mut screen_state) {
-        if read_screen_state_ref(cpu, &mut screen_state) {
+        if read_screen_state(cpu, &mut screen_state) {
+        // if read_screen_state_ref(cpu, &mut screen_state) {
             texture.update(None, &screen_state, 32 * 3).unwrap();
 
             canvas.copy(&texture, None, None).unwrap();
