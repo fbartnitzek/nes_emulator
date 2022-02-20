@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::ops::{BitAnd, BitOr, BitXor};
 use crate::cpu::{AddressingMode, CpuFlags};
 
-const STACK: u16 = 0x0100;
+const STACK_AREA: u16 = 0x0100;
 const STACK_RESET: u8 = 0xFF;
 
 pub struct CPU {
@@ -154,41 +154,7 @@ impl CPU {
   }
 
 
-  fn stack_pop(&mut self) -> u8 {
-    self.stack_pointer = self.stack_pointer.wrapping_add(1);
-    self.mem_read((STACK as u16) + self.stack_pointer as u16)
-  }
 
-  fn stack_push(&mut self, data: u8) {
-    self.mem_write((STACK as u16) + self.stack_pointer as u16, data);
-    self.stack_pointer = self.stack_pointer.wrapping_sub(1)
-  }
-
-  fn stack_push_u16(&mut self, data: u16) {
-    let hi = (data >> 8) as u8;
-    let lo = (data & 0xff) as u8;
-    self.stack_push(hi);
-    self.stack_push(lo);
-  }
-
-  fn stack_pop_u16(&mut self) -> u16 {
-    let lo = self.stack_pop() as u16;
-    let hi = self.stack_pop() as u16;
-
-    hi << 8 | lo
-  }
-
-
-  fn set_flags(&mut self, flags: u8) {
-    self.status.set(CpuFlags::CARRY,flags & 0x01 != 0);
-    self.status.set(CpuFlags::ZERO,flags & 0x02 != 0);
-    self.status.set(CpuFlags::INTERRUPT_DISABLE,flags & 0x04 != 0);
-    self.status.set(CpuFlags::DECIMAL_MODE,flags & 0x08 != 0);
-    self.status.set(CpuFlags::BREAK,flags & 0x10 != 0);
-    self.status.set(CpuFlags::BREAK2,flags & 0x20 != 0);
-    self.status.set(CpuFlags::OVERFLOW,flags & 0x40 != 0);
-    self.status.set(CpuFlags::NEGATIVE,flags & 0x80 != 0);
-  }
 
 
   fn branch(&mut self, condition: bool) {
@@ -596,6 +562,17 @@ impl CPU {
     self.update_zero_and_negative_flags(self.register_a);
   }
 
+  fn set_flags(&mut self, flags: u8) {
+    self.status.set(CpuFlags::CARRY,flags & 0x01 != 0);
+    self.status.set(CpuFlags::ZERO,flags & 0x02 != 0);
+    self.status.set(CpuFlags::INTERRUPT_DISABLE,flags & 0x04 != 0);
+    self.status.set(CpuFlags::DECIMAL_MODE,flags & 0x08 != 0);
+    self.status.set(CpuFlags::BREAK,flags & 0x10 != 0);
+    self.status.set(CpuFlags::BREAK2,flags & 0x20 != 0);
+    self.status.set(CpuFlags::OVERFLOW,flags & 0x40 != 0);
+    self.status.set(CpuFlags::NEGATIVE,flags & 0x80 != 0);
+  }
+
   fn plp(&mut self) {
     let flags = self.stack_pop();
     self.set_flags(flags);
@@ -692,6 +669,29 @@ impl CPU {
   fn tya(&mut self) {
     self.register_a = self.register_y;
     self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn stack_push(&mut self, data: u8) {
+    self.mem_write(STACK_AREA as u16 + self.stack_pointer as u16, data);
+    self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+  }
+
+  fn stack_push_u16(&mut self, data: u16) {
+    let hi = (data >> 8) as u8;
+    let lo = (data & 0xFF) as u8;
+    self.stack_push(hi);
+    self.stack_push(lo);
+  }
+
+  fn stack_pop(&mut self) -> u8 {
+    self.stack_pointer = self.stack_pointer.wrapping_add(1);
+    self.mem_read(STACK_AREA as u16 + self.stack_pointer as u16)
+  }
+
+  fn stack_pop_u16(&mut self) -> u16 {
+    let lo = self.stack_pop() as u16;
+    let hi = self.stack_pop() as u16;
+    hi << 8 | lo
   }
 }
 
