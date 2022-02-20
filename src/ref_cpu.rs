@@ -280,25 +280,6 @@ impl CPU {
     data
   }
 
-  fn dey(&mut self) {
-    self.register_y = self.register_y.wrapping_sub(1);
-    self.update_zero_and_negative_flags(self.register_y);
-  }
-
-  fn dex(&mut self) {
-    self.register_x = self.register_x.wrapping_sub(1);
-    self.update_zero_and_negative_flags(self.register_x);
-  }
-
-  fn dec(&mut self, mode: &AddressingMode) -> u8 {
-    let addr = self.get_operand_address(mode);
-    let mut data = self.mem_read(addr);
-    data = data.wrapping_sub(1);
-    self.mem_write(addr, data);
-    self.update_zero_and_negative_flags(data);
-    data
-  }
-
   fn pla(&mut self) {
     let data = self.stack_pop();
     self.set_register_a(data);
@@ -330,19 +311,6 @@ impl CPU {
     flags.insert(CpuFlags::BREAK);
     flags.insert(CpuFlags::BREAK2);
     self.stack_push(flags.bits());
-  }
-
-
-  fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
-    let addr = self.get_operand_address(mode);
-    let data = self.mem_read(addr);
-    if data <= compare_with {
-      self.status.insert(CpuFlags::CARRY);
-    } else {
-      self.status.remove(CpuFlags::CARRY);
-    }
-
-    self.update_zero_and_negative_flags(compare_with.wrapping_sub(data));
   }
 
   fn branch(&mut self, condition: bool) {
@@ -397,6 +365,14 @@ impl CPU {
         0x58 => self.cli(),
         0xB8 => self.clv(),
 
+        0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(&opcode.mode),
+        0xE0 | 0xE4 | 0xEC => self.cpx(&opcode.mode),
+        0xC0 | 0xC4 | 0xCC => self.cpy(&opcode.mode),
+
+        0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(&opcode.mode),
+        0xCA => self.dex(),
+        0x88 => self.dey(),
+
         0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
 
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
@@ -442,8 +418,6 @@ impl CPU {
           self.sbc(&opcode.mode);
         }
 
-
-
         /* EOR */
         0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
           self.eor(&opcode.mode);
@@ -461,34 +435,6 @@ impl CPU {
 
         /* INY */
         0xc8 => self.iny(),
-
-        /* DEC */
-        0xc6 | 0xd6 | 0xce | 0xde => {
-          self.dec(&opcode.mode);
-        }
-
-        /* DEX */
-        0xca => {
-          self.dex();
-        }
-
-        /* DEY */
-        0x88 => {
-          self.dey();
-        }
-
-        /* CMP */
-        0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
-          self.compare(&opcode.mode, self.register_a);
-        }
-
-        /* CPY */
-        0xc0 | 0xc4 | 0xcc => {
-          self.compare(&opcode.mode, self.register_y);
-        }
-
-        /* CPX */
-        0xe0 | 0xe4 | 0xec => self.compare(&opcode.mode, self.register_x),
 
         /* JMP Absolute */
         0x4c => {
@@ -710,6 +656,45 @@ impl CPU {
 
   fn clv(&mut self) {
     self.status.remove(CpuFlags::OVERFLOW)
+  }
+
+  fn cmp(&mut self, mode: &AddressingMode) {
+    self.compare(mode, self.register_a);
+  }
+
+  fn cpx(&mut self, mode: &AddressingMode) {
+    self.compare(mode, self.register_x);
+  }
+
+  fn cpy(&mut self, mode: &AddressingMode) {
+    self.compare(mode, self.register_y);
+  }
+
+  fn compare(&mut self, mode: &AddressingMode, reference: u8) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+
+    // Z,C,N = A-M
+    self.status.set(CpuFlags::CARRY, reference >= data);
+    self.update_zero_and_negative_flags(reference.wrapping_sub(data))
+  }
+
+  fn dec(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+    let new_value = value.wrapping_sub(1);
+    self.mem_write(addr, new_value);
+    self.update_zero_and_negative_flags(new_value);
+  }
+
+  fn dex(&mut self) {
+    self.register_x = self.register_x.wrapping_sub(1);
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn dey(&mut self) {
+    self.register_y = self.register_y.wrapping_sub(1);
+    self.update_zero_and_negative_flags(self.register_y);
   }
 
   fn lsr(&mut self, mode: &AddressingMode) {
