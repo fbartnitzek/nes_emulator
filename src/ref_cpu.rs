@@ -52,8 +52,8 @@ impl CPU {
       register_x: 0,
       register_y: 0,
       stack_pointer: STACK_RESET,
-      program_counter: 0x8000,
       status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
+      program_counter: 0x8000,
       memory: [0; 0xFFFF],
     }
   }
@@ -125,7 +125,7 @@ impl CPU {
   }
 
   pub fn load_with_address(&mut self, program: Vec<u8>, start_address: u16) {
-    self.memory[start_address as usize .. (start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
+    self.memory[start_address as usize..(start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
     self.mem_write_u16(0xFFFC, start_address);
   }
 
@@ -138,9 +138,6 @@ impl CPU {
 
     self.program_counter = self.mem_read_u16(0xFFFC);
   }
-
-
-
 
 
   pub fn run(&mut self) {
@@ -450,7 +447,7 @@ impl CPU {
     }
   }
 
-  fn jsr(&mut self){
+  fn jsr(&mut self) {
     self.stack_push_u16(self.program_counter + 2 - 1);
     self.program_counter = self.mem_read_u16(self.program_counter);
   }
@@ -480,7 +477,7 @@ impl CPU {
   }
 
   fn lsr(&mut self, mode: &AddressingMode) {
-    if matches!(mode, AddressingMode::Immediate){
+    if matches!(mode, AddressingMode::Immediate) {
       self.status.set(CpuFlags::CARRY, self.register_a & 0x01 == 1);
       self.register_a >>= 1;
       self.update_zero_and_negative_flags(self.register_a);
@@ -546,14 +543,14 @@ impl CPU {
   }
 
   fn set_flags(&mut self, flags: u8) {
-    self.status.set(CpuFlags::CARRY,flags & 0x01 != 0);
-    self.status.set(CpuFlags::ZERO,flags & 0x02 != 0);
-    self.status.set(CpuFlags::INTERRUPT_DISABLE,flags & 0x04 != 0);
-    self.status.set(CpuFlags::DECIMAL_MODE,flags & 0x08 != 0);
-    self.status.set(CpuFlags::BREAK,flags & 0x10 != 0);
-    self.status.set(CpuFlags::BREAK2,flags & 0x20 != 0);
-    self.status.set(CpuFlags::OVERFLOW,flags & 0x40 != 0);
-    self.status.set(CpuFlags::NEGATIVE,flags & 0x80 != 0);
+    self.status.set(CpuFlags::CARRY, flags & 0x01 != 0);
+    self.status.set(CpuFlags::ZERO, flags & 0x02 != 0);
+    self.status.set(CpuFlags::INTERRUPT_DISABLE, flags & 0x04 != 0);
+    self.status.set(CpuFlags::DECIMAL_MODE, flags & 0x08 != 0);
+    self.status.set(CpuFlags::BREAK, flags & 0x10 != 0);
+    self.status.set(CpuFlags::BREAK2, flags & 0x20 != 0);
+    self.status.set(CpuFlags::OVERFLOW, flags & 0x40 != 0);
+    self.status.set(CpuFlags::NEGATIVE, flags & 0x80 != 0);
   }
 
   fn plp(&mut self) {
@@ -596,11 +593,11 @@ impl CPU {
     }
   }
 
-  fn rts(&mut self){
+  fn rts(&mut self) {
     // -1 based on https://web.archive.org/web/20170224121759/http://www.obelisk.me.uk/6502/reference.html#RTS
     // +1 based on http://www.6502.org/tutorials/6502opcodes.html#RTS
     // take +1 for now, as jsr already subtracts 1 ...
-    self.program_counter = self.stack_pop_u16() +1;
+    self.program_counter = self.stack_pop_u16() + 1;
   }
 
   fn rti(&mut self) {

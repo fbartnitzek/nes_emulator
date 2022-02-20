@@ -82,7 +82,6 @@ impl MyCPU {
       register_y: 0,
       stack_pointer: STACK_RESET,
       status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
-      // program_counter: 0,
       program_counter: 0x8000,
       memory: [0; 0xFFFF],
     }
@@ -96,7 +95,7 @@ impl MyCPU {
         dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
       }
     }
-    return dump
+    return dump;
   }
 
   pub fn load_reset_and_run(&mut self, program: Vec<u8>) {
@@ -116,7 +115,7 @@ impl MyCPU {
   }
 
   pub fn load_with_address(&mut self, program: Vec<u8>, start_address: u16) {
-    self.memory[start_address as usize .. (start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
+    self.memory[start_address as usize..(start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
     self.mem_write_u16(0xFFFC, start_address);
   }
 
@@ -135,8 +134,8 @@ impl MyCPU {
   }
 
   pub fn run_with_callback<F>(&mut self, mut callback: F)
-  where
-    F: FnMut(&mut MyCPU),
+    where
+      F: FnMut(&mut MyCPU),
   {
     let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -254,7 +253,7 @@ impl MyCPU {
     if len == 3 {
       return format!("{:#04x} {:#04x}",
                      self.mem_read(self.program_counter),
-                     self.mem_read(self.program_counter+1));
+                     self.mem_read(self.program_counter + 1));
     }
     return format!("         ");
   }
@@ -460,16 +459,16 @@ impl MyCPU {
     }
   }
 
-  fn jsr(&mut self){
+  fn jsr(&mut self) {
     self.stack_push_u16(self.program_counter + 2 - 1);
     self.program_counter = self.mem_read_u16(self.program_counter);
   }
 
-  fn rts(&mut self){
+  fn rts(&mut self) {
     // -1 based on https://web.archive.org/web/20170224121759/http://www.obelisk.me.uk/6502/reference.html#RTS
     // +1 based on http://www.6502.org/tutorials/6502opcodes.html#RTS
     // take +1 for now, as jsr already subtracts 1 ...
-    self.program_counter = self.stack_pop_u16() +1;
+    self.program_counter = self.stack_pop_u16() + 1;
   }
 
   fn lda(&mut self, mode: &AddressingMode) {
@@ -497,7 +496,7 @@ impl MyCPU {
   }
 
   fn lsr(&mut self, mode: &AddressingMode) {
-    if matches!(mode, AddressingMode::Immediate){
+    if matches!(mode, AddressingMode::Immediate) {
       self.status.set(CpuFlags::CARRY, self.register_a & 0x01 == 1);
       self.register_a >>= 1;
       self.update_zero_and_negative_flags(self.register_a);
