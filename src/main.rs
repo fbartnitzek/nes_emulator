@@ -67,7 +67,8 @@ fn main() {
     // let mut cpu = MyCPU::new();
     // cpu.load_with_address(game_code, 0x0600);
     let mut cpu = CPU::new();
-    cpu.load(game_code);
+    // cpu.load(game_code);
+    cpu.load_with_address(game_code, 0x0600);
 
     cpu.reset();
 

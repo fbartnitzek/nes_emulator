@@ -207,6 +207,11 @@ impl CPU {
     self.mem_write_u16(0xFFFC, 0x0600);
   }
 
+  pub fn load_with_address(&mut self, program: Vec<u8>, start_address: u16) {
+    self.memory[start_address as usize .. (start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
+    self.mem_write_u16(0xFFFC, start_address);
+  }
+
   pub fn reset(&mut self) {
     self.register_a = 0;
     self.register_x = 0;
