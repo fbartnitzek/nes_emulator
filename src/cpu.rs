@@ -623,7 +623,7 @@ impl CPU {
 
   fn stack_push_u16(&mut self, data: u16) {
     let hi = (data >> 8) as u8;
-    let lo = (data & 0x0F) as u8;
+    let lo = (data & 0xFF) as u8;
     self.stack_push(hi);
     self.stack_push(lo);
   }
