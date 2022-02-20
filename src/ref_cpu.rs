@@ -1,6 +1,6 @@
 use crate::opcodes;
 use std::collections::HashMap;
-use std::ops::{BitAnd, BitXor};
+use std::ops::{BitAnd, BitOr, BitXor};
 use crate::cpu::{AddressingMode, CpuFlags};
 
 const STACK: u16 = 0x0100;
@@ -112,20 +112,9 @@ impl CPU {
     }
   }
 
-  fn sta(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    self.mem_write(addr, self.register_a);
-  }
-
   fn set_register_a(&mut self, value: u8) {
     self.register_a = value;
     self.update_zero_and_negative_flags(self.register_a);
-  }
-
-  fn ora(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let data = self.mem_read(addr);
-    self.set_register_a(data | self.register_a);
   }
 
   fn tax(&mut self) {
@@ -236,12 +225,6 @@ impl CPU {
   }
 
 
-  fn pla(&mut self) {
-    let data = self.stack_pop();
-    self.set_register_a(data);
-  }
-
-
   fn set_flags(&mut self, flags: u8) {
     self.status.set(CpuFlags::CARRY,flags & 0x01 != 0);
     self.status.set(CpuFlags::ZERO,flags & 0x02 != 0);
@@ -253,21 +236,6 @@ impl CPU {
     self.status.set(CpuFlags::NEGATIVE,flags & 0x80 != 0);
   }
 
-  fn plp(&mut self) {
-    let flags = self.stack_pop();
-    self.set_flags(flags);
-    // self.status.bits = self.stack_pop();
-    self.status.remove(CpuFlags::BREAK);
-    self.status.insert(CpuFlags::BREAK2);
-  }
-
-  fn php(&mut self) {
-    //http://wiki.nesdev.com/w/index.php/CPU_status_flag_behavior
-    let mut flags = self.status.clone();
-    flags.insert(CpuFlags::BREAK);
-    flags.insert(CpuFlags::BREAK2);
-    self.stack_push(flags.bits());
-  }
 
   fn branch(&mut self, condition: bool) {
     if condition {
@@ -344,6 +312,18 @@ impl CPU {
 
         0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
 
+        0xEA => self.nop(),
+        0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(&opcode.mode),
+
+        0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode.mode),
+        0x86 | 0x96 | 0x8E => self.stx(&opcode.mode),
+        0x84 | 0x94 | 0x8C => self.sty(&opcode.mode),
+
+        0x48 => self.pha(),
+        0x08 => self.php(),
+        0x68 => self.pla(),
+        0x28 => self.plp(),
+
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
         0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(&opcode.mode),
 
@@ -359,34 +339,9 @@ impl CPU {
 
         /* SED */ 0xf8 => self.status.insert(CpuFlags::DECIMAL_MODE),
 
-        /* PHA */ 0x48 => self.stack_push(self.register_a),
-
-        /* PLA */
-        0x68 => {
-          self.pla();
-        }
-
-        /* PHP */
-        0x08 => {
-          self.php();
-        }
-
-        /* PLP */
-        0x28 => {
-          self.plp();
-        }
-
-
-
         /* SBC */
         0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
           self.sbc(&opcode.mode);
-        }
-
-
-        /* ORA */
-        0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
-          self.ora(&opcode.mode);
         }
 
         /* RTS */
@@ -403,28 +358,6 @@ impl CPU {
           self.status.insert(CpuFlags::BREAK2);
 
           self.program_counter = self.stack_pop_u16();
-        }
-
-        /* STA */
-        0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
-          self.sta(&opcode.mode);
-        }
-
-        /* STX */
-        0x86 | 0x96 | 0x8e => {
-          let addr = self.get_operand_address(&opcode.mode);
-          self.mem_write(addr, self.register_x);
-        }
-
-        /* STY */
-        0x84 | 0x94 | 0x8c => {
-          let addr = self.get_operand_address(&opcode.mode);
-          self.mem_write(addr, self.register_y);
-        }
-
-        /* NOP */
-        0xea => {
-          //do nothing
         }
 
         /* TAY */
@@ -700,6 +633,58 @@ impl CPU {
 
   fn lowest_bit_set(value: u8) -> bool {
     value & 0b0000_0001 != 0
+  }
+
+  fn nop(&mut self) {
+    // nothing
+  }
+
+  fn ora(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+
+    self.register_a = self.register_a.bitor(data);
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn sta(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    self.mem_write(addr, self.register_a);
+  }
+
+  fn stx(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    self.mem_write(addr, self.register_x);
+  }
+
+  fn sty(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    self.mem_write(addr, self.register_y);
+  }
+
+  fn pha(&mut self) {
+    self.stack_push(self.register_a);
+  }
+
+  fn php(&mut self) {
+    let mut flags = self.status.clone();
+    // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+    flags.insert(CpuFlags::BREAK);
+    flags.insert(CpuFlags::BREAK2);
+    self.stack_push(flags.bits());
+  }
+
+  fn pla(&mut self) {
+    self.register_a = self.stack_pop();
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn plp(&mut self) {
+    let flags = self.stack_pop();
+    self.set_flags(flags);
+    // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+    self.status.remove(CpuFlags::BREAK);
+    self.status.insert(CpuFlags::BREAK2);
   }
 
   fn rol(&mut self, mode: &AddressingMode) {
