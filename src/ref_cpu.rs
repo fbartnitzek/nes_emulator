@@ -217,8 +217,7 @@ impl CPU {
     self.register_x = 0;
     self.register_y = 0;
     self.stack_pointer = STACK_RESET;
-    self.status = CpuFlags::from_bits_truncate(0b100100);
-    // self.memory = [0; 0xFFFF];
+    self.status = CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2;
 
     self.program_counter = self.mem_read_u16(0xFFFC);
   }
