@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::cpu::{AddressingMode, CpuFlags};
 
 const STACK: u16 = 0x0100;
-const STACK_RESET: u8 = 0xfd;
+const STACK_RESET: u8 = 0xFF;
 
 pub struct CPU {
   pub register_a: u8,
@@ -51,8 +51,8 @@ impl CPU {
       register_x: 0,
       register_y: 0,
       stack_pointer: STACK_RESET,
-      program_counter: 0,
-      status: CpuFlags::from_bits_truncate(0b100100),
+      program_counter: 0x8000,
+      status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
       memory: [0; 0xFFFF],
     }
   }
