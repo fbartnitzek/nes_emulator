@@ -546,7 +546,7 @@ impl CPU {
       let value = self.mem_read(addr);
       let result = value.rotate_left(1);
       self.status.set(CpuFlags::CARRY, Self::highest_bit_set(value));
-      self.update_zero_and_negative_flags(result);
+      self.status.set(CpuFlags::NEGATIVE, result >> 7 == 1);
       self.mem_write(addr, result);
     }
   }
@@ -570,7 +570,7 @@ impl CPU {
       let value = self.mem_read(addr);
       let result = value.rotate_right(1);
       self.status.set(CpuFlags::CARRY, Self::lowest_bit_set(value));
-      self.update_zero_and_negative_flags(result);
+      self.status.set(CpuFlags::NEGATIVE, result >> 7 == 1);
       self.mem_write(addr, result);
     }
   }
