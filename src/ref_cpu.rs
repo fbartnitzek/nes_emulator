@@ -1,5 +1,6 @@
 use crate::opcodes;
 use std::collections::HashMap;
+use std::ops::BitAnd;
 use crate::cpu::{AddressingMode, CpuFlags};
 
 const STACK: u16 = 0x0100;
@@ -141,12 +142,6 @@ impl CPU {
     self.update_zero_and_negative_flags(self.register_a);
   }
 
-  fn and(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let data = self.mem_read(addr);
-    self.set_register_a(data & self.register_a);
-  }
-
   fn eor(&mut self, mode: &AddressingMode) {
     let addr = self.get_operand_address(mode);
     let data = self.mem_read(addr);
@@ -266,11 +261,6 @@ impl CPU {
     self.add_to_register_a(((data as i8).wrapping_neg().wrapping_sub(1)) as u8);
   }
 
-  fn adc(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let value = self.mem_read(addr);
-    self.add_to_register_a(value);
-  }
 
   fn stack_pop(&mut self) -> u8 {
     self.stack_pointer = self.stack_pointer.wrapping_add(1);
@@ -294,30 +284,6 @@ impl CPU {
     let hi = self.stack_pop() as u16;
 
     hi << 8 | lo
-  }
-
-  fn asl_accumulator(&mut self) {
-    let mut data = self.register_a;
-    if data >> 7 == 1 {
-      self.set_carry_flag();
-    } else {
-      self.clear_carry_flag();
-    }
-    data = data << 1;
-    self.set_register_a(data)
-  }
-
-  fn asl(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let mut data = self.mem_read(addr);
-    if data >> 7 == 1 {
-      self.set_carry_flag();
-    } else {
-      self.clear_carry_flag();
-    }
-    data = data << 1;
-    self.mem_write(addr, data);
-    self.update_zero_and_negative_flags(data);
   }
 
   fn lsr_accumulator(&mut self) {
@@ -536,18 +502,16 @@ impl CPU {
 
         0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
         0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
-        0x0a => self.asl_accumulator(),
-        0x06 | 0x16 | 0x0e | 0x1e => self.asl(&opcode.mode),
+        0x0a | 0x06 | 0x16 | 0x0e | 0x1e => self.asl(&opcode.mode),
 
-
-        0x90 => self.branch(!self.status.contains(CpuFlags::CARRY)),/* BCC */
-        0xb0 => self.branch(self.status.contains(CpuFlags::CARRY)), /* BCS */
-        0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),  /* BEQ */
-        0x30 => self.branch(self.status.contains(CpuFlags::NEGATIVE)),/* BMI */
-        0xd0 => self.branch(!self.status.contains(CpuFlags::ZERO)), /* BNE */
-        0x10 => self.branch(!self.status.contains(CpuFlags::NEGATIVE)), /* BPL */
-        0x50 => self.branch(!self.status.contains(CpuFlags::OVERFLOW)), /* BVC */
-        0x70 => self.branch(self.status.contains(CpuFlags::OVERFLOW)), /* BVS */
+        0x90 => self.bcc(),
+        0xb0 => self.bcs(),
+        0xf0 => self.beq(),
+        0x30 => self.bmi(),
+        0xd0 => self.bne(),
+        0x10 => self.bpl(),
+        0x50 => self.bvc(),
+        0x70 => self.bvs(),
 
 
         0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
@@ -793,6 +757,82 @@ impl CPU {
 
       callback(self);
     }
+  }
+
+  fn adc(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let data = self.mem_read(addr);
+    self.add_to_acc(data);
+  }
+
+  fn add_to_acc(&mut self, data: u8) {
+    let carry = if self.status.contains(CpuFlags::CARRY) { 1 } else { 0 };
+    let sum = self.register_a as u16 + data as u16 + carry;
+    self.status.set(CpuFlags::CARRY, sum > 0xFF);
+
+    let result = sum as u8;
+    // some highest bit set...
+    self.status.set(CpuFlags::OVERFLOW,
+                    (data ^ result) & (result ^ self.register_a) & 0x80 != 0);
+
+    self.register_a = result;
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn and(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_a = value.bitand(self.register_a);
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn asl(&mut self, mode: &AddressingMode) {
+    if matches!(mode, AddressingMode::NoneAddressing) {
+      self.status.set(CpuFlags::CARRY, self.register_a & 0b1000_0000 != 0);
+      self.register_a <<= 1;
+      self.update_zero_and_negative_flags(self.register_a);
+    } else {
+      let addr = self.get_operand_address(mode);
+      let mut value = self.mem_read(addr);
+      self.status.set(CpuFlags::CARRY, value & 0b1000_0000 != 0);
+
+      value <<= 1;
+      self.mem_write(addr, value);
+      self.update_zero_and_negative_flags(value);
+    }
+  }
+
+  fn bcc(&mut self) {
+    self.branch(!self.status.contains(CpuFlags::CARRY))
+  }
+
+  fn bcs(&mut self) {
+    self.branch(self.status.contains(CpuFlags::CARRY))
+  }
+
+  fn beq(&mut self) {
+    self.branch(self.status.contains(CpuFlags::ZERO))
+  }
+
+  fn bmi(&mut self) {
+    self.branch(self.status.contains(CpuFlags::NEGATIVE))
+  }
+
+  fn bne(&mut self) {
+    self.branch(!self.status.contains(CpuFlags::ZERO))
+  }
+
+  fn bpl(&mut self) {
+    self.branch(!self.status.contains(CpuFlags::NEGATIVE))
+  }
+
+  fn bvc(&mut self) {
+    self.branch(!self.status.contains(CpuFlags::OVERFLOW))
+  }
+
+  fn bvs(&mut self) {
+    self.branch(self.status.contains(CpuFlags::OVERFLOW))
   }
 }
 
