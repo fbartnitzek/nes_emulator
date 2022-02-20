@@ -270,7 +270,7 @@ impl MyCPU {
     let value = self.mem_read(addr);
 
     // A - B = A + (-B). And -B = !B + 1
-    self.add_to_acc(value.wrapping_neg());
+    self.add_to_acc(((value as i8).wrapping_neg().wrapping_sub(1)) as u8);
   }
 
   fn add_to_acc(&mut self, data: u8) {

@@ -65,9 +65,7 @@ fn main() {
 
     // load the game
     // let mut cpu = MyCPU::new();
-    // cpu.load_with_address(game_code, 0x0600);
     let mut cpu = CPU::new();
-    // cpu.load(game_code);
     cpu.load_with_address(game_code, 0x0600);
 
     cpu.reset();
@@ -82,6 +80,7 @@ fn main() {
 
         cpu.mem_write(0xFE, rng.gen_range(1, 16));
 
+        // if read_screen_state(cpu, &mut screen_state) {
         if read_screen_state_ref(cpu, &mut screen_state) {
             texture.update(None, &screen_state, 32 * 3).unwrap();
 
