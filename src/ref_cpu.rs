@@ -1,6 +1,6 @@
 use crate::opcodes;
 use std::collections::HashMap;
-use std::ops::BitAnd;
+use std::ops::{BitAnd, BitXor};
 use crate::cpu::{AddressingMode, CpuFlags};
 
 const STACK: u16 = 0x0100;
@@ -142,12 +142,6 @@ impl CPU {
     self.update_zero_and_negative_flags(self.register_a);
   }
 
-  fn eor(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(mode);
-    let data = self.mem_read(addr);
-    self.set_register_a(data ^ self.register_a);
-  }
-
   fn ora(&mut self, mode: &AddressingMode) {
     let addr = self.get_operand_address(mode);
     let data = self.mem_read(addr);
@@ -171,16 +165,6 @@ impl CPU {
     } else {
       self.status.remove(CpuFlags::NEGATIVE);
     }
-  }
-
-  fn inx(&mut self) {
-    self.register_x = self.register_x.wrapping_add(1);
-    self.update_zero_and_negative_flags(self.register_x);
-  }
-
-  fn iny(&mut self) {
-    self.register_y = self.register_y.wrapping_add(1);
-    self.update_zero_and_negative_flags(self.register_y);
   }
 
   pub fn load_and_run(&mut self, program: Vec<u8>) {
@@ -271,14 +255,6 @@ impl CPU {
     hi << 8 | lo
   }
 
-  fn inc(&mut self, mode: &AddressingMode) -> u8 {
-    let addr = self.get_operand_address(mode);
-    let mut data = self.mem_read(addr);
-    data = data.wrapping_add(1);
-    self.mem_write(addr, data);
-    self.update_zero_and_negative_flags(data);
-    data
-  }
 
   fn pla(&mut self) {
     let data = self.stack_pop();
@@ -373,6 +349,12 @@ impl CPU {
         0xCA => self.dex(),
         0x88 => self.dey(),
 
+        0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => self.eor(&opcode.mode),
+
+        0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(&opcode.mode),
+        0xE8 => self.inx(),
+        0xC8 => self.iny(),
+
         0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode.mode),
 
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
@@ -387,7 +369,7 @@ impl CPU {
         }
 
         0xAA => self.tax(),
-        0xe8 => self.inx(),
+
 
 
         /* SEI */ 0x78 => self.status.insert(CpuFlags::INTERRUPT_DISABLE),
@@ -418,23 +400,11 @@ impl CPU {
           self.sbc(&opcode.mode);
         }
 
-        /* EOR */
-        0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
-          self.eor(&opcode.mode);
-        }
 
         /* ORA */
         0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
           self.ora(&opcode.mode);
         }
-
-        /* INC */
-        0xe6 | 0xf6 | 0xee | 0xfe => {
-          self.inc(&opcode.mode);
-        }
-
-        /* INY */
-        0xc8 => self.iny(),
 
         /* JMP Absolute */
         0x4c => {
@@ -695,6 +665,32 @@ impl CPU {
   fn dey(&mut self) {
     self.register_y = self.register_y.wrapping_sub(1);
     self.update_zero_and_negative_flags(self.register_y);
+  }
+
+  fn inc(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+    let new_value = value.wrapping_add(1);
+    self.mem_write(addr, new_value);
+    self.update_zero_and_negative_flags(new_value);
+  }
+
+  fn inx(&mut self) {
+    self.register_x = self.register_x.wrapping_add(1);
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn iny(&mut self) {
+    self.register_y = self.register_y.wrapping_add(1);
+    self.update_zero_and_negative_flags(self.register_y);
+  }
+
+  fn eor(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    self.register_a = self.register_a.bitxor(value);
+    self.update_zero_and_negative_flags(self.register_a);
   }
 
   fn lsr(&mut self, mode: &AddressingMode) {
