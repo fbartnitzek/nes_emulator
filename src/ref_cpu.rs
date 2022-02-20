@@ -307,7 +307,7 @@ impl CPU {
     self.set_register_a(data)
   }
 
-  fn asl(&mut self, mode: &AddressingMode) -> u8 {
+  fn asl(&mut self, mode: &AddressingMode) {
     let addr = self.get_operand_address(mode);
     let mut data = self.mem_read(addr);
     if data >> 7 == 1 {
@@ -318,7 +318,6 @@ impl CPU {
     data = data << 1;
     self.mem_write(addr, data);
     self.update_zero_and_negative_flags(data);
-    data
   }
 
   fn lsr_accumulator(&mut self) {
@@ -533,13 +532,31 @@ impl CPU {
       let opcode = opcodes.get(&code).unwrap();
 
       match code {
+        0x00 => return,
+
+        0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => self.adc(&opcode.mode),
+        0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => self.and(&opcode.mode),
+        0x0a => self.asl_accumulator(),
+        0x06 | 0x16 | 0x0e | 0x1e => self.asl(&opcode.mode),
+
+
+        0x90 => self.branch(!self.status.contains(CpuFlags::CARRY)),/* BCC */
+        0xb0 => self.branch(self.status.contains(CpuFlags::CARRY)), /* BCS */
+        0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),  /* BEQ */
+        0x30 => self.branch(self.status.contains(CpuFlags::NEGATIVE)),/* BMI */
+        0xd0 => self.branch(!self.status.contains(CpuFlags::ZERO)), /* BNE */
+        0x10 => self.branch(!self.status.contains(CpuFlags::NEGATIVE)), /* BPL */
+        0x50 => self.branch(!self.status.contains(CpuFlags::OVERFLOW)), /* BVC */
+        0x70 => self.branch(self.status.contains(CpuFlags::OVERFLOW)), /* BVS */
+
+
         0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
           self.lda(&opcode.mode);
         }
 
         0xAA => self.tax(),
         0xe8 => self.inx(),
-        0x00 => return,
+
 
         /* CLD */ 0xd8 => self.status.remove(CpuFlags::DECIMAL_MODE),
 
@@ -572,20 +589,14 @@ impl CPU {
           self.plp();
         }
 
-        /* ADC */
-        0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
-          self.adc(&opcode.mode);
-        }
+
 
         /* SBC */
         0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
           self.sbc(&opcode.mode);
         }
 
-        /* AND */
-        0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => {
-          self.and(&opcode.mode);
-        }
+
 
         /* EOR */
         0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
@@ -602,13 +613,6 @@ impl CPU {
         /* LSR */
         0x46 | 0x56 | 0x4e | 0x5e => {
           self.lsr(&opcode.mode);
-        }
-
-        /*ASL*/ 0x0a => self.asl_accumulator(),
-
-        /* ASL */
-        0x06 | 0x16 | 0x0e | 0x1e => {
-          self.asl(&opcode.mode);
         }
 
         /*ROL*/ 0x2a => self.rol_accumulator(),
@@ -710,45 +714,9 @@ impl CPU {
           self.program_counter = self.stack_pop_u16();
         }
 
-        /* BNE */
-        0xd0 => {
-          self.branch(!self.status.contains(CpuFlags::ZERO));
-        }
 
-        /* BVS */
-        0x70 => {
-          self.branch(self.status.contains(CpuFlags::OVERFLOW));
-        }
 
-        /* BVC */
-        0x50 => {
-          self.branch(!self.status.contains(CpuFlags::OVERFLOW));
-        }
 
-        /* BPL */
-        0x10 => {
-          self.branch(!self.status.contains(CpuFlags::NEGATIVE));
-        }
-
-        /* BMI */
-        0x30 => {
-          self.branch(self.status.contains(CpuFlags::NEGATIVE));
-        }
-
-        /* BEQ */
-        0xf0 => {
-          self.branch(self.status.contains(CpuFlags::ZERO));
-        }
-
-        /* BCS */
-        0xb0 => {
-          self.branch(self.status.contains(CpuFlags::CARRY));
-        }
-
-        /* BCC */
-        0x90 => {
-          self.branch(!self.status.contains(CpuFlags::CARRY));
-        }
 
         /* BIT */
         0x24 | 0x2c => {
