@@ -112,10 +112,6 @@ impl CPU {
     }
   }
 
-  fn tax(&mut self) {
-    self.register_x = self.register_a;
-    self.update_zero_and_negative_flags(self.register_x);
-  }
 
   fn update_zero_and_negative_flags(&mut self, result: u8) {
     if result == 0 {
@@ -293,39 +289,12 @@ impl CPU {
         0xF8 => self.sed(),
         0x78 => self.sei(),
 
-
-
         0xAA => self.tax(),
-
-
-        /* TAY */
-        0xa8 => {
-          self.register_y = self.register_a;
-          self.update_zero_and_negative_flags(self.register_y);
-        }
-
-        /* TSX */
-        0xba => {
-          self.register_x = self.stack_pointer;
-          self.update_zero_and_negative_flags(self.register_x);
-        }
-
-        /* TXA */
-        0x8a => {
-          self.register_a = self.register_x;
-          self.update_zero_and_negative_flags(self.register_a);
-        }
-
-        /* TXS */
-        0x9a => {
-          self.stack_pointer = self.register_x;
-        }
-
-        /* TYA */
-        0x98 => {
-          self.register_a = self.register_y;
-          self.update_zero_and_negative_flags(self.register_a);
-        }
+        0xA8 => self.tay(),
+        0xBA => self.tsx(),
+        0x8A => self.txa(),
+        0x9A => self.txs(),
+        0x98 => self.tya(),
 
         _ => todo!(),
       }
@@ -694,6 +663,35 @@ impl CPU {
 
   fn sei(&mut self) {
     self.status.insert(CpuFlags::INTERRUPT_DISABLE);
+  }
+
+  fn tax(&mut self) {
+    self.register_x = self.register_a;
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn tay(&mut self) {
+    self.register_y = self.register_a;
+    self.update_zero_and_negative_flags(self.register_y);
+  }
+
+  fn tsx(&mut self) {
+    self.register_x = self.stack_pointer;
+    self.update_zero_and_negative_flags(self.register_x);
+  }
+
+  fn txa(&mut self) {
+    self.register_a = self.register_x;
+    self.update_zero_and_negative_flags(self.register_a);
+  }
+
+  fn txs(&mut self) {
+    self.stack_pointer = self.register_x;
+  }
+
+  fn tya(&mut self) {
+    self.register_a = self.register_y;
+    self.update_zero_and_negative_flags(self.register_a);
   }
 }
 
