@@ -141,24 +141,7 @@ impl CPU {
 
 
 
-  // fn branch(&mut self, condition: bool) {
-  //   if condition {
-  //     let value = self.mem_read(self.program_counter);
-  //     self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(value as u16);
-  //   }
-  // }
 
-  fn branch(&mut self, condition: bool) {
-    if condition {
-      let jump: i8 = self.mem_read(self.program_counter) as i8;
-      let jump_addr = self
-        .program_counter
-        .wrapping_add(1)
-        .wrapping_add(jump as u16);
-
-      self.program_counter = jump_addr;
-    }
-  }
 
   pub fn run(&mut self) {
     self.run_with_callback(|_| {});
@@ -348,6 +331,15 @@ impl CPU {
 
   fn bvs(&mut self) {
     self.branch(self.status.contains(CpuFlags::OVERFLOW))
+  }
+
+  fn branch(&mut self, condition: bool) {
+    if condition {
+      self.program_counter = self.program_counter
+        .wrapping_add(1)
+        // i don't have a clue, why i need that, but without snake won't work
+        .wrapping_add((self.mem_read(self.program_counter) as i8) as u16);
+    }
   }
 
   fn bit(&mut self, mode: &AddressingMode) {
