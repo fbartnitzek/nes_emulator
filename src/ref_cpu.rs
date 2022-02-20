@@ -112,10 +112,10 @@ impl CPU {
     }
   }
 
-  fn set_register_a(&mut self, value: u8) {
-    self.register_a = value;
-    self.update_zero_and_negative_flags(self.register_a);
-  }
+  // fn set_register_a(&mut self, value: u8) {
+  //   self.register_a = value;
+  //   self.update_zero_and_negative_flags(self.register_a);
+  // }
 
   fn tax(&mut self) {
     self.register_x = self.register_a;
@@ -163,41 +163,41 @@ impl CPU {
   }
 
 
-  /// note: ignoring decimal mode
-  /// http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
-  fn add_to_register_a(&mut self, data: u8) {
-    let sum = self.register_a as u16
-      + data as u16
-      + (if self.status.contains(CpuFlags::CARRY) {
-      1
-    } else {
-      0
-    }) as u16;
+  // /// note: ignoring decimal mode
+  // /// http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+  // fn add_to_register_a(&mut self, data: u8) {
+  //   let sum = self.register_a as u16
+  //     + data as u16
+  //     + (if self.status.contains(CpuFlags::CARRY) {
+  //     1
+  //   } else {
+  //     0
+  //   }) as u16;
+  //
+  //   let carry = sum > 0xff;
+  //
+  //   if carry {
+  //     self.status.insert(CpuFlags::CARRY);
+  //   } else {
+  //     self.status.remove(CpuFlags::CARRY);
+  //   }
+  //
+  //   let result = sum as u8;
+  //
+  //   if (data ^ result) & (result ^ self.register_a) & 0x80 != 0 {
+  //     self.status.insert(CpuFlags::OVERFLOW);
+  //   } else {
+  //     self.status.remove(CpuFlags::OVERFLOW)
+  //   }
+  //
+  //   self.set_register_a(result);
+  // }
 
-    let carry = sum > 0xff;
-
-    if carry {
-      self.status.insert(CpuFlags::CARRY);
-    } else {
-      self.status.remove(CpuFlags::CARRY);
-    }
-
-    let result = sum as u8;
-
-    if (data ^ result) & (result ^ self.register_a) & 0x80 != 0 {
-      self.status.insert(CpuFlags::OVERFLOW);
-    } else {
-      self.status.remove(CpuFlags::OVERFLOW)
-    }
-
-    self.set_register_a(result);
-  }
-
-  fn sbc(&mut self, mode: &AddressingMode) {
-    let addr = self.get_operand_address(&mode);
-    let data = self.mem_read(addr);
-    self.add_to_register_a(((data as i8).wrapping_neg().wrapping_sub(1)) as u8);
-  }
+  // fn sbc(&mut self, mode: &AddressingMode) {
+  //   let addr = self.get_operand_address(&mode);
+  //   let data = self.mem_read(addr);
+  //   self.add_to_register_a(((data as i8).wrapping_neg().wrapping_sub(1)) as u8);
+  // }
 
 
   fn stack_pop(&mut self) -> u8 {
@@ -326,6 +326,10 @@ impl CPU {
 
         0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode.mode),
         0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(&opcode.mode),
+        0x60 => self.rts(),
+        0x40 => self.rti(),
+
+        0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(&opcode.mode),
 
         0x38 => self.sec(),
 
@@ -338,27 +342,6 @@ impl CPU {
         /* SEI */ 0x78 => self.status.insert(CpuFlags::INTERRUPT_DISABLE),
 
         /* SED */ 0xf8 => self.status.insert(CpuFlags::DECIMAL_MODE),
-
-        /* SBC */
-        0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
-          self.sbc(&opcode.mode);
-        }
-
-        /* RTS */
-        0x60 => {
-          self.program_counter = self.stack_pop_u16() + 1;
-        }
-
-        /* RTI */
-        0x40 => {
-          // self.status.bits = self.stack_pop();
-          let flags = self.stack_pop();
-          self.set_flags(flags);
-          self.status.remove(CpuFlags::BREAK);
-          self.status.insert(CpuFlags::BREAK2);
-
-          self.program_counter = self.stack_pop_u16();
-        }
 
         /* TAY */
         0xa8 => {
@@ -404,6 +387,16 @@ impl CPU {
     let addr = self.get_operand_address(mode);
     let data = self.mem_read(addr);
     self.add_to_acc(data);
+  }
+
+  fn sbc(&mut self, mode: &AddressingMode) {
+    let addr = self.get_operand_address(mode);
+    let value = self.mem_read(addr);
+
+    // A - B = A + (-B). And -B = !B + 1
+    // self.add_to_acc(value.wrapping_neg());
+    let inverted_value = ((value as i8).wrapping_neg().wrapping_sub(1)) as u8;
+    self.add_to_acc(inverted_value);
   }
 
   fn add_to_acc(&mut self, data: u8) {
@@ -717,6 +710,23 @@ impl CPU {
       self.status.set(CpuFlags::NEGATIVE, result >> 7 == 1);
       self.mem_write(addr, result);
     }
+  }
+
+  fn rts(&mut self){
+    // -1 based on https://web.archive.org/web/20170224121759/http://www.obelisk.me.uk/6502/reference.html#RTS
+    // +1 based on http://www.6502.org/tutorials/6502opcodes.html#RTS
+    // take +1 for now, as jsr already subtracts 1 ...
+    self.program_counter = self.stack_pop_u16() +1;
+  }
+
+  fn rti(&mut self) {
+    let flags = self.stack_pop();
+    self.set_flags(flags);
+    // https://wiki.nesdev.org/w/index.php/Status_flags#The_B_flag
+    self.status.remove(CpuFlags::BREAK);
+    self.status.insert(CpuFlags::BREAK2);
+
+    self.program_counter = self.stack_pop_u16();
   }
 
   fn sec(&mut self) {
