@@ -21,3 +21,9 @@ sudo apt-get install libsdl2-dev    # worked
 ```
 cargo run
 ```
+
+## debug nes-rom
+- list all non-empty hex-rows
+```
+xxd -i snake.nes | grep -v "0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00"
+```

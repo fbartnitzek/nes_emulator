@@ -104,28 +104,19 @@ impl MyCPU {
       if value > 0 {
         dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
       }
-      // self.mem_write(start_address + i, program[i as usize]);
     }
 
-    // for (i, elem) in self.memory.iter().enumerate() {
-    //   let value = *elem;
-    //   if value > 0 {
-    //     dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
-    //   }
-    // }
     return dump;
   }
 
   pub fn load_reset_and_run(&mut self, program: Vec<u8>) {
     self.load(program);
     self.reset();
-    self.program_counter = 0x0600;  // todo: temporary fix
     self.run();
   }
 
   pub fn load_and_run(&mut self, program: Vec<u8>) {
     self.load(program);
-    self.program_counter = 0x0600;  // todo: temporary fix
     self.run();
   }
 
@@ -134,11 +125,10 @@ impl MyCPU {
       self.mem_write(0x0600 + i, program[i as usize]); // todo: remove magic 0x0600
     }
 
-    self.mem_write_u16(0xFFFC, 0x0600); // todo: remove magic 0x0600
+    // self.mem_write_u16(0xFFFC, 0x0600); // todo: remove magic 0x0600
   }
 
   pub fn load_with_address(&mut self, program: Vec<u8>, start_address: u16) {
-    // self.memory[start_address as usize..(start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
     for i in 0..(program.len() as u16) {
       self.mem_write(start_address + i, program[i as usize]);
     }
