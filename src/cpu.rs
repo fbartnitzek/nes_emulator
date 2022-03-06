@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::ops::{BitAnd, BitOr, BitXor};
+use crate::bus::Bus;
 use crate::opcodes;
 
 bitflags! {
@@ -27,7 +28,7 @@ pub struct MyCPU {
   pub status: CpuFlags,
   pub program_counter: u16,
   pub stack_pointer: u8,
-  memory: [u8; 0xFFFF],
+  pub bus: Bus,
 }
 
 #[derive(Debug)]
@@ -66,57 +67,83 @@ pub trait MyMem {
 
 impl MyMem for MyCPU {
   fn mem_read(&self, addr: u16) -> u8 {
-    self.memory[addr as usize]
+    self.bus.mem_read(addr)
   }
 
   fn mem_write(&mut self, addr: u16, data: u8) {
-    self.memory[addr as usize] = data;
+    self.bus.mem_write(addr, data)
+  }
+
+  fn mem_read_u16(&self, addr: u16) -> u16 {
+    self.bus.mem_read_u16(addr)
+  }
+
+  fn mem_write_u16(&mut self, addr: u16, data: u16) {
+    self.bus.mem_write_u16(addr, data)
   }
 }
 
 impl MyCPU {
-  pub fn new() -> Self {
+  pub fn new(bus: Bus) -> Self {
     MyCPU {
       register_a: 0,
       register_x: 0,
       register_y: 0,
       stack_pointer: STACK_RESET,
       status: CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2,
-      program_counter: 0x8000,
-      memory: [0; 0xFFFF],
+      program_counter: 0,
+      bus,
     }
   }
 
   pub fn dump_non_empty_memory(&self) -> String {
     let mut dump = String::new();
-    for (i, elem) in self.memory.iter().enumerate() {
-      let value = *elem;
+
+    for i in 0..0x1FFF {
+      let value = self.mem_read(i);
       if value > 0 {
         dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
       }
+      // self.mem_write(start_address + i, program[i as usize]);
     }
+
+    // for (i, elem) in self.memory.iter().enumerate() {
+    //   let value = *elem;
+    //   if value > 0 {
+    //     dump.push_str(&format!("Memory {:x} = {:x}\n", i, value))
+    //   }
+    // }
     return dump;
   }
 
   pub fn load_reset_and_run(&mut self, program: Vec<u8>) {
     self.load(program);
     self.reset();
+    self.program_counter = 0x0600;  // todo: temporary fix
     self.run();
   }
 
   pub fn load_and_run(&mut self, program: Vec<u8>) {
     self.load(program);
+    self.program_counter = 0x0600;  // todo: temporary fix
     self.run();
   }
 
   pub fn load(&mut self, program: Vec<u8>) {
-    self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
-    self.mem_write_u16(0xFFFC, 0x8000);
+    for i in 0..(program.len() as u16) {
+      self.mem_write(0x0600 + i, program[i as usize]); // todo: remove magic 0x0600
+    }
+
+    self.mem_write_u16(0xFFFC, 0x0600); // todo: remove magic 0x0600
   }
 
   pub fn load_with_address(&mut self, program: Vec<u8>, start_address: u16) {
-    self.memory[start_address as usize..(start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
+    // self.memory[start_address as usize..(start_address + program.len() as u16) as usize].copy_from_slice(&program[..]);
+    for i in 0..(program.len() as u16) {
+      self.mem_write(start_address + i, program[i as usize]);
+    }
     self.mem_write_u16(0xFFFC, start_address);
+    // self.program_counter = start_address;
   }
 
   pub fn reset(&mut self) {
@@ -127,6 +154,7 @@ impl MyCPU {
     self.status = CpuFlags::INTERRUPT_DISABLE | CpuFlags::BREAK2;
 
     self.program_counter = self.mem_read_u16(0xFFFC);
+    println!("program_counter: {}", self.program_counter);
   }
 
   pub fn run(&mut self) {

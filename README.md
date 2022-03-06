@@ -6,7 +6,7 @@ based on https://bugzmanov.github.io/nes_ebook/
 cargo test
 ```
 
-## run
+## run "UI"
 - some ld error
 ```
   = note: /usr/bin/ld: cannot find -lSDL2
@@ -15,4 +15,9 @@ cargo test
 - solution:
 ```
 sudo apt-get install libsdl2-dev    # worked
+```
+
+## run
+```
+cargo run
 ```
